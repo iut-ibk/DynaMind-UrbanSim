@@ -1,0 +1,16 @@
+Source: vibe2urbansim
+Section: science
+Priority: extra
+Maintainer: Christian Urich <christian.urich@gmail.com>
+Build-Depends: debhelper (>= 7.0.50~), cmake, debhelper (>= 7.0.50~), cmake, libcgal-dev(>=3.6.0~), python(>=2.6.0~), python-dev(>=2.6.0~), libboost-python-dev(>=1.36.0~), libboost-program-options1.42-dev(>=1.36.0~), libboost-date-time1.42-dev(>=1.36.0~), libqt4-dev(>=4.6.0~), vibe2core-dev(>=1.0.1~), vibe2core(>=1.0.1~)
+
+Standards-Version: 3.9.1
+Homepage: <insert the upstream URL, if relevant>
+#Vcs-Git: git://git.debian.org/collab-maint/vibe2urbansim.git
+#Vcs-Browser: http://git.debian.org/?p=collab-maint/vibe2urbansim.git;a=summary
+
+Package: vibe2urbansim
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: <insert up to 60 chars description>
+ <insert long description, indented with spaces>

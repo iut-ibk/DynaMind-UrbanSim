@@ -1,0 +1,5 @@
+vibe2urbansim (1.0.0-1) unstable; urgency=low
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- Christian Urich <christian.urich@gmail.com>  Tue, 02 Aug 2011 13:44:27 +0200
