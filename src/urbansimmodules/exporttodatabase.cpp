@@ -129,10 +129,11 @@ void ExportToDataBase::run() {
             //double val  = attr.getAttribute(n);
             query.bindValue(QString::fromStdString(insert.str()) , QString::fromStdString(attr.getStringAttribute(n)) );
         }
-        query.exec();
+
 
 
     }
+    query.exec();
     if ( !query.exec("COMMIT") );
        Logger(Error) << query.lastError().text().toStdString();
 
