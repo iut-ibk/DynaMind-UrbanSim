@@ -130,11 +130,10 @@ void ExportToDataBase::run() {
             query.bindValue(QString::fromStdString(insert.str()) , QString::fromStdString(attr.getStringAttribute(n)) );
         }
 
-
+        query.exec();
 
     }
-    query.exec();
-    if ( !query.exec("COMMIT") );
+    if ( !query.exec("END TRANSACTION") );
        Logger(Error) << query.lastError().text().toStdString();
 
     db.close();
