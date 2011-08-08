@@ -133,7 +133,7 @@ void ExportToDataBase::run() {
         query.exec();
 
     }
-    if ( !query.exec("END TRANSACTION") );
+    if ( !query.exec("COMMIT") );
        Logger(Error) << query.lastError().text().toStdString();
 
     db.close();
