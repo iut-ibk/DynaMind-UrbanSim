@@ -4,9 +4,9 @@
  * @version 1.0
  * @section LICENSE
  *
- * This file is part of VIBe2
+ * This file is part of DynaMind
  *
- * Copyright (C) 2011  Christian Urich
+ * Copyright (C) 2011-2012  Christian Urich
 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,13 +27,17 @@
 #ifndef EXPORTTODATABASE_H
 #define EXPORTTODATABASE_H
 
-#include "module.h"
-using namespace vibens;
+#include <dmcompilersettings.h>
+#include <dmmodule.h>
+#include <dm.h>
+
+using namespace DM;
 /** @ingroup UrbanSim
-  * @author Christian Urich
+  * @brief Exports Attributes to a Database
+  *
   */
-class VIBE_HELPER_DLL_EXPORT ExportToDataBase : public  Module {
-VIBe_DECLARE_NODE(ExportToDataBase)
+class DM_HELPER_DLL_EXPORT ExportToDataBase : public  DM::Module {
+DM_DECLARE_NODE(ExportToDataBase)
 private:
     std::string DBName;
     std::string TableName;
@@ -41,7 +45,7 @@ private:
     bool DeleteExistingDB;
     std::map<std::string, std::string> Dataypes;
     std::map<std::string, std::string> Export;
-    VectorData * Input;
+    DM::System * Input;
 
 public:
     ExportToDataBase();

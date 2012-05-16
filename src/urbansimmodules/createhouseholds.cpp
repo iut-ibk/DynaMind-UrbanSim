@@ -25,16 +25,35 @@
  */
 
 #include "createhouseholds.h"
-#include "vectordatahelper.h"
-VIBe_DECLARE_NODE_NAME(CreateHouseHolds, UrbanSim)
+
+DM_DECLARE_NODE_NAME(CreateHouseHolds, UrbanSim)
 CreateHouseHolds::CreateHouseHolds()
 {
-    this->IdentifierGrid = "GRID_";
     this->YearsToRun = 20;
-    this->addParameter("Population", VIBe2::VECTORDATA_IN, &Population);
-    this->addParameter("IdentifierGrid", VIBe2::STRING, &IdentifierGrid);
-    this->addParameter("Households", VIBe2::VECTORDATA_OUT, &Households_out);
-    this->addParameter("YearsToRun", VIBe2::INT, &YearsToRun);
+
+    grids = DM::View("GRID", DM::FACE, DM::READ);
+    grids.getAttribute("Population");
+
+    households = DM::View("Population", DM::NODE, DM::WRITE);
+    households.addAttribute("persons");
+    households.addAttribute("race_id");
+    households.addAttribute("GRID_id");
+    households.addAttribute("income");
+    households.addAttribute("cars");
+    households.addAttribute("workers");
+    households.addAttribute("age_of_head");
+    households.addAttribute("children");
+
+
+    std::vector<DM::View> data;
+    data.push_back(grids);
+    data.push_back(households);
+    this->addParameter("YearsToRun", DM::INT, &YearsToRun);
+
+    this->addData("City", data);
+
+
+
 }
 void CreateHouseHolds::run() {
     double h1[] = {
@@ -175,15 +194,13 @@ void CreateHouseHolds::run() {
 
     };
 
-    std::vector<std::string> ids = VectorDataHelper::findElementsWithIdentifier(this->IdentifierGrid, this->Population->getAttributeNames());
-    *(Households_out) = *(Population);
+    city = this->getData("City");
+
+    std::vector<std::string> ids = city->getUUIDsOfComponentsInView(grids);
     unsigned long HouseholdCounter = 0;
     foreach (std::string id, ids) {
-        Attribute attr = this->Population->getAttributes(id);
 
-
-        long population = (long) attr.getAttribute("Population");
-        long grid_id = (int) attr.getAttribute("GRID_ID");
+        long population = (long) city->getComponent(id)->getAttribute("Population")->getDouble();
 
         do {
 
@@ -205,23 +222,18 @@ void CreateHouseHolds::run() {
             }
 
 
-            Attribute household;
-            household.setAttribute("GRID_ID", grid_id);
-            household.setAttribute("household_id", HouseholdCounter);
-            household.setAttribute("persons", size );
-            household.setAttribute("race_id", 1 );
-            household.setAttribute("income",   rand() % 50000 + 1);
-            household.setAttribute("cars",   rand() % 3 );
-            household.setAttribute("workers",   rand() % 3 );
-            household.setAttribute("age_of_head",   rand() % 40+20 );
-            household.setAttribute("children",   rand() % 2);
-            stringstream ss;
-            ss << "Household_";
-            ss << HouseholdCounter;
+            DM::Node * household = new DM::Node();
 
-            this->Households_out->setAttributes(ss.str(), household);
-            population = population-size;
-            HouseholdCounter++;
+            Attribute grid_id("GRID_ID");
+            grid_id.setString(id);
+            household->addAttribute(grid_id);
+            household->addAttribute("persons", size );
+            household->addAttribute("race_id", 1 );
+            household->addAttribute("income",   rand() % 50000 + 1);
+            household->addAttribute("cars",   rand() % 3 );
+            household->addAttribute("workers",   rand() % 3 );
+            household->addAttribute("age_of_head",   rand() % 40+20 );
+            household->addAttribute("children",   rand() % 2);
 
         } while (population > 0);
 
@@ -232,7 +244,7 @@ void CreateHouseHolds::run() {
 
     //Create Annual Household Controlls
 
-    std::vector<std::string> househildIDs = VectorDataHelper::findElementsWithIdentifier("Household_", this->Households_out->getAttributeNames());
+    std::vector<std::string> househildIDs = this->city->getUUIDsOfComponentsInView(households);
 
     std::vector<int> persons_counter;
 

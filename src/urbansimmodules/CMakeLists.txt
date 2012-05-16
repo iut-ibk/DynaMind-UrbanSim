@@ -1,11 +1,10 @@
 file(GLOB URBANSIM_CPPS *.cpp)
 
-include_directories(${VIBE2CORE_INCLUDE_DIRS})
 
-add_library(vibe2urbansim SHARED ${URBANSIM_CPPS})
-target_link_libraries(vibe2urbansim  ${VIBE2CORE_LIBRARIES} ${VIBE2HELPER_LIBRARIES} ${QT_LIBRARIES})
+add_library(dynamind-urbansim SHARED ${URBANSIM_CPPS})
+target_link_libraries(dynamind-urbansim  ${DYNAMIND_TOOLBOX_LIBRARY}  ${DYNAMIND_CORE_LIBRARY} ${QT_LIBRARIES})
 
-INSTALL(TARGETS vibe2urbansim 
-        DESTINATION "lib"
+INSTALL(TARGETS dynamind-urbansim
+        DESTINATION "lib/DynaMind"
         PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 

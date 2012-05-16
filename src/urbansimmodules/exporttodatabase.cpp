@@ -4,9 +4,9 @@
  * @version 1.0
  * @section LICENSE
  *
- * This file is part of VIBe2
+ * This file is part of DynaMind
  *
- * Copyright (C) 2011  Christian Urich
+ * Copyright (C) 2011-2012  Christian Urich
 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,10 +25,11 @@
  */
 
 #include "exporttodatabase.h"
-#include "vectordatahelper.h"
-#include <QtSql>
 
-VIBe_DECLARE_NODE_NAME(ExportToDataBase, UrbanSim)
+#include <QtSql>
+#include <sstream>
+
+DM_DECLARE_NODE_NAME(ExportToDataBase, UrbanSim)
 ExportToDataBase::ExportToDataBase()
 {
     this->DBName = "urbansim_export_test";
@@ -36,24 +37,32 @@ ExportToDataBase::ExportToDataBase()
     this->Identifier = "Household_";
     this->DeleteExistingDB = false;
 
-    this->addParameter("DBName", VIBe2::STRING,& this->DBName);
-    this->addParameter("TableName", VIBe2::STRING, & this->TableName);
-    this->addParameter("Identifier", VIBe2::STRING, & this->Identifier);
+    this->addParameter("DBName", DM::STRING,& this->DBName);
+    this->addParameter("TableName", DM::STRING, & this->TableName);
+    this->addParameter("Identifier", DM::STRING, & this->Identifier);
 
-    this->addParameter("DeleteExistingDB", VIBe2::BOOL, &this->DeleteExistingDB);
-    this->addParameter("Export", VIBe2::STRING_MAP, &this->Export);
-    this->addParameter("Datatypes", VIBe2::STRING_MAP, &this->Dataypes);
 
-    this->addParameter("Input", VIBe2::VECTORDATA_IN, &this->Input);
+    this->addParameter("DeleteExistingDB", DM::BOOL, &this->DeleteExistingDB);
+    this->addParameter("Export", DM::STRING_MAP, &this->Export);
+    this->addParameter("Datatypes", DM::STRING_MAP, &this->Dataypes);
+
+    //this->addParameter("Input", VIBe2::VECTORDATA_IN, &this->Input);
+
+    std::vector<DM::View> data;
+    data.push_back(  DM::View ("dummy", DM::SUBSYSTEM, DM::MODIFY) );
+
+    this->addData("Data", data);
+
+
+
 }
 
 void ExportToDataBase::run() {
-    //QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    Input = this->getData("Data");
     QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL", QUuid::createUuid().toString());
     db.setHostName("127.0.0.1");
     db.setUserName("urbansim");
     db.setPassword("urbansim");
-    //db.setDatabaseName("/tmp/urbansim.txt");
     bool ok = db.open();
     if( ok == false) {
         Logger(Error) << "Database failed";
@@ -62,7 +71,6 @@ void ExportToDataBase::run() {
 
     // Setup the db and start using it somewhere after successfully connecting to the server..
     QString dbname = QString::fromStdString(this->DBName);
-    QString tablename = QString::fromStdString(this->TableName);
 
     QSqlQuery query(db);
     bool sr;
@@ -92,8 +100,23 @@ void ExportToDataBase::run() {
     Logger(Debug) << ss.str();
     sr = query.exec(QString::fromStdString(ss.str() ));
 
+
+    //get Component Type
+    std::vector<DM::View> ExistingViews = Input->getViews();
+    DM::View ViewID;
+    foreach (DM::View v, ExistingViews) {
+        if (this->Identifier.compare(v.getName()) == 0) {
+            ViewID = v;
+            break;
+        }
+    }
+    if (ViewID.getName().empty()) {
+        DM::Logger(DM::Error) << "Identifier doesn't exist " << this->Identifier;
+        return;
+    }
+
     std::vector<std::string> names;
-    names = VectorDataHelper::findElementsWithIdentifier(this->Identifier, this->Input->getAttributeNames());
+    names = Input->getUUIDsOfComponentsInView(ViewID);
 
     stringstream insertstream;
 
@@ -119,22 +142,25 @@ void ExportToDataBase::run() {
     Logger(Debug) << insertstream.str();
     query.prepare(QString::fromStdString(insertstream.str()));
     foreach(std::string name, names) {
-        Attribute attr = this->Input->getAttributes(name);
-
 
         for (std::map<std::string, std::string>::const_iterator it = this->Export.begin(); it !=  this->Export.end(); ++it) {
             stringstream insert;
             insert << ":"<< it->second;
             std::string n = it->first;
-            //double val  = attr.getAttribute(n);
-            query.bindValue(QString::fromStdString(insert.str()) , QString::fromStdString(attr.getStringAttribute(n)) );
+            //Atttribute to String
+            std::stringstream ss;
+            if (Input->getComponent(name)->getAttribute(n)->hasDouble())
+                ss << Input->getComponent(name)->getAttribute(n)->getDouble();
+            if (Input->getComponent(name)->getAttribute(n)->hasString())
+                ss << Input->getComponent(name)->getAttribute(n)->getString();
+            query.bindValue(QString::fromStdString(insert.str()) , QString::fromStdString(ss.str()) );
         }
 
         query.exec();
 
     }
     if ( !query.exec("COMMIT") );
-       Logger(Error) << query.lastError().text().toStdString();
+    Logger(Error) << query.lastError().text().toStdString();
 
     db.close();
 }

@@ -27,21 +27,24 @@
 #ifndef CREATEHOUSEHOLDS_H
 #define CREATEHOUSEHOLDS_H
 
-
-#include "module.h"
-using namespace vibens;
+#include <dmcompilersettings.h>
+#include <dmmodule.h>
+#include <dm.h>
 
 /** @ingroup UrbanSim
   * @author Christian Urich
+  * @brief Create Household tables for an UrbanSim simulation
   */
-class VIBE_HELPER_DLL_EXPORT CreateHouseHolds : public  Module {
-VIBe_DECLARE_NODE(  CreateHouseHolds )
+using namespace DM;
+class DM_HELPER_DLL_EXPORT CreateHouseHolds : public  Module {
+DM_DECLARE_NODE(  CreateHouseHolds )
 
 private:
     std::string IdentifierGrid;
     int YearsToRun;
-    VectorData * Population;
-    VectorData * Households_out;
+    DM::View grids;
+    DM::View households;
+    DM::System * city;
 
 public:
     CreateHouseHolds();
