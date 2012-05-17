@@ -26,30 +26,27 @@
 
 
 #include "convertsqltovibe.h"
-#include "vectordatahelper.h"
+
 
 #include <QtSql>
-VIBe_DECLARE_NODE_NAME(ConvertSQLtoVIBe, UrbanSim)
+DM_DECLARE_NODE_NAME(ConvertSQLtoVIBe, UrbanSim)
 ConvertSQLtoVIBe::ConvertSQLtoVIBe()
 {
     this->identifier = "GRID_";
     this->identifier_households = "HOUSEHOLD_";
     this->Year = 1981;
     this->start = 0;
-    this->addParameter("Identifier", VIBe2::STRING, &identifier);
-    this->addParameter("GridData", VIBe2::VECTORDATA_IN, &this->GridData);
-    this->addParameter("GridData_out", VIBe2::VECTORDATA_OUT, &this->GridData_out);
-    this->addParameter("IdentifierHouseholds", VIBe2::STRING, &this->identifier_households);
+    this->addParameter("Identifier", DM::STRING, &identifier);
+    this->addParameter("IdentifierHouseholds", DM::STRING, &this->identifier_households);
 
-    this->addParameter("Start", VIBe2::DOUBLEDATA_IN, &this->start);
-    this->addParameter("Year", VIBe2::INT, &this->Year);
+    this->addParameter("Start", DM::DOUBLE, &this->start);
+    this->addParameter("Year", DM::INT, &this->Year);
 
 }
 
 void ConvertSQLtoVIBe::run() {
     Logger(Standard) << "Year: "<< this->Year;
 
-    *(GridData_out) = *(GridData);
 
     Attribute y = GridData_out->getAttributes("Globals");
     Logger(Debug) << y.getAttribute("Year");

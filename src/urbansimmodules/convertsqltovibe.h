@@ -27,8 +27,10 @@
 #ifndef CONVERTSQLTOVIBE_H
 #define CONVERTSQLTOVIBE_H
 
-#include "module.h"
-using namespace vibens;
+#include "dmcompilersettings.h"
+#include "dmmodule.h"
+#include "dm.h"
+using namespace DM;
 /**
   * @ingroup UrbanSim
   * @brief This VIBe2 module imports the UrbanSim results from the MySQlDatabase to the VectorData format from VIBe
@@ -55,12 +57,11 @@ using namespace vibens;
 /** @ingroup UrbanSim
   * @author Christian Urich
   */
-class VIBE_HELPER_DLL_EXPORT ConvertSQLtoVIBe : public  Module {
+class DM_HELPER_DLL_EXPORT ConvertSQLtoVIBe : public  Module {
 
-    VIBe_DECLARE_NODE(ConvertSQLtoVIBe)
+    DM_DECLARE_NODE(ConvertSQLtoVIBe)
 
-    VectorData * GridData;
-    VectorData * GridData_out;
+    DM::System * city;
 
 
     std::string identifier;

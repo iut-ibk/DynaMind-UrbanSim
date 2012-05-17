@@ -32,8 +32,12 @@ CreateHouseHolds::CreateHouseHolds()
     this->YearsToRun = 20;
 
     grids = DM::View("GRID", DM::FACE, DM::READ);
+    prognsis = DM::View("HOUSEHOLD_PROGNOSIS", DM::COMPONENT, DM::WRITE);
+    prognsis.addAttribute("year");
+    prognsis.addAttribute("race_id");
+    prognsis.addAttribute("persons");
+    prognsis.addAttribute("total_number_of_households");
     grids.getAttribute("Population");
-
     households = DM::View("Population", DM::NODE, DM::WRITE);
     households.addAttribute("persons");
     households.addAttribute("race_id");
@@ -44,12 +48,10 @@ CreateHouseHolds::CreateHouseHolds()
     households.addAttribute("age_of_head");
     households.addAttribute("children");
 
-
     std::vector<DM::View> data;
     data.push_back(grids);
     data.push_back(households);
     this->addParameter("YearsToRun", DM::INT, &YearsToRun);
-
     this->addData("City", data);
 
 
@@ -246,7 +248,7 @@ void CreateHouseHolds::run() {
 
     std::vector<std::string> househildIDs = this->city->getUUIDsOfComponentsInView(households);
 
-    std::vector<int> persons_counter;
+    std::vector<double> persons_counter;
 
     for (int i = 0; i < 6; i++) {
         persons_counter.push_back(0);
@@ -254,25 +256,24 @@ void CreateHouseHolds::run() {
 
 
     foreach(std::string id, househildIDs) {
-        Attribute household  = this->Households_out->getAttributes(id);
-
-        int persons = (int) household.getAttribute("persons");
+        int persons = (int) city->getComponent(id)->getAttribute("persons")->getDouble();
         persons_counter[persons-1] = persons_counter[persons-1]+1;
 
     }
-    int counter = 0;
-    for (int year = 1980; year < 1980+YearsToRun; year++) {
-        for (int i = 0; i < 6; i++) {
-            Attribute attr;
-            attr.setAttribute("persons", i+1);
-            attr.setAttribute("year",year);
-            attr.setAttribute("race_id", 1);
-            attr.setAttribute("total_number_of_households",persons_counter[i] );
-            stringstream household_control_totals;
+    std::vector<double> househodsizes;
+    for (int i = 0; i < 6; i++)
+        househodsizes.push_back(i+1);
 
-            household_control_totals << "annual_household_control_table_" << counter;
-            this->Households_out->setAttributes(household_control_totals.str(),attr );
-            counter++;
+
+    for (int year = 1980; year < 1980+YearsToRun; year++) {
+        Component * cmp = new Component();
+        cmp->setName(QString::number(year).toStdString());
+        this->city->addComponent(cmp, prognsis);
+        cmp->addAttribute("year",year);
+        cmp->addAttribute("race_id", 1);
+
+        for (int i = 0; i < 6; i++) {
+            cmp->addAttribute("persons", i+1);
 
             //Calculate new placed households
             if (i < 1) {
@@ -291,6 +292,13 @@ void CreateHouseHolds::run() {
 
 
         }
+        Attribute th ("total_number_of_households");
+        th.setDoubleVector(persons_counter);
+        cmp->addAttribute(th);
+
+        Attribute ps ("persons");
+        ps.setDoubleVector(househodsizes);
+        cmp->addAttribute(ps);
 
     }
 

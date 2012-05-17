@@ -44,6 +44,7 @@ private:
     int YearsToRun;
     DM::View grids;
     DM::View households;
+    DM::View prognsis;
     DM::System * city;
 
 public:
