@@ -32,13 +32,14 @@ CreateHouseHolds::CreateHouseHolds()
     this->YearsToRun = 20;
 
     grids = DM::View("GRID", DM::FACE, DM::READ);
+     grids.getAttribute("Population");
     prognsis = DM::View("HOUSEHOLD_PROGNOSIS", DM::COMPONENT, DM::WRITE);
     prognsis.addAttribute("year");
     prognsis.addAttribute("race_id");
     prognsis.addAttribute("persons");
     prognsis.addAttribute("total_number_of_households");
-    grids.getAttribute("Population");
-    households = DM::View("Population", DM::NODE, DM::WRITE);
+
+    households = DM::View("HOUSEHOLD", DM::NODE, DM::WRITE);
     households.addAttribute("persons");
     households.addAttribute("race_id");
     households.addAttribute("GRID_id");
@@ -299,8 +300,5 @@ void CreateHouseHolds::run() {
         Attribute ps ("persons");
         ps.setDoubleVector(househodsizes);
         cmp->addAttribute(ps);
-
     }
-
-
 }

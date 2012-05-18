@@ -64,8 +64,12 @@ class DM_HELPER_DLL_EXPORT ConvertSQLtoVIBe : public  Module {
     DM::System * city;
 
 
-    std::string identifier;
-    std::string identifier_households;
+
+    DM::View globals;
+    DM::View households;
+    DM::View grids;
+
+
     double start;
     int Year;
 

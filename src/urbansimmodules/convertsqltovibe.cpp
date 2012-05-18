@@ -4,9 +4,9 @@
  * @version 1.0
  * @section LICENSE
  *
- * This file is part of VIBe2
+ * This file is part of DynaMind
  *
- * Copyright (C) 2011  Christian Urich
+ * Copyright (C) 2011-2012  Christian Urich
 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,33 +26,58 @@
 
 
 #include "convertsqltovibe.h"
-
-
 #include <QtSql>
+
 DM_DECLARE_NODE_NAME(ConvertSQLtoVIBe, UrbanSim)
 ConvertSQLtoVIBe::ConvertSQLtoVIBe()
 {
-    this->identifier = "GRID_";
-    this->identifier_households = "HOUSEHOLD_";
     this->Year = 1981;
     this->start = 0;
-    this->addParameter("Identifier", DM::STRING, &identifier);
-    this->addParameter("IdentifierHouseholds", DM::STRING, &this->identifier_households);
 
     this->addParameter("Start", DM::DOUBLE, &this->start);
     this->addParameter("Year", DM::INT, &this->Year);
 
+
+
+    globals = DM::View("GLOBALS", DM::COMPONENT, DM::MODIFY);
+
+    globals.addAttribute("Year");
+
+    households = DM::View("HOUSEHOLD", DM::FACE, DM::MODIFY);
+    households.getAttribute("urbansim_id");
+    households.addAttribute("cars");
+    households.addAttribute("workers");
+    households.addAttribute("grid_id");
+    households.addAttribute("persons");
+    households.addAttribute("race_id");
+    households.addAttribute("income");
+    households.addAttribute("age_of_head");
+    households.addAttribute("children");
+
+
+    grids = DM::View("GRID", DM::FACE, DM::READ);
+    grids.getAttribute("UrbanSim_ID");
+
+
+
+    std::vector<DM::View> data;
+    data.push_back(globals);
+    data.push_back(households);
+    data.push_back(grids);
+
+    this->addData("City", data);
+
+
+
 }
 
 void ConvertSQLtoVIBe::run() {
+    city = this->getData("City");
     Logger(Standard) << "Year: "<< this->Year;
 
+    DM::Component * global = city->getComponent(city->getUUIDsOfComponentsInView(globals)[0]);
+    global->addAttribute("Year", this->Year);
 
-    Attribute y = GridData_out->getAttributes("Globals");
-    Logger(Debug) << y.getAttribute("Year");
-    y.setAttribute("Year", this->Year);
-    y.setAttribute("Datatype", "GridData");
-    GridData_out->setAttributes("Globals", y);
 
     QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL", QUuid::createUuid().toString());
     db.setUserName("urbansim");
@@ -66,8 +91,8 @@ void ConvertSQLtoVIBe::run() {
     //Set Population to 0;
 
 
-    std::vector<std::string> names = VectorDataHelper::findElementsWithIdentifier(this->identifier, this->GridData->getAttributeNames());
-    std::vector<std::string> names_existing_Households = VectorDataHelper::findElementsWithIdentifier(this->identifier_households, this->GridData->getAttributeNames());
+    std::vector<std::string> names = city->getUUIDsOfComponentsInView(grids);
+    std::vector<std::string> names_existing_Households = city->getUUIDsOfComponentsInView(households);
 
 
     // Setup the db and start using it somewhere after successfully connecting to the server.
@@ -81,7 +106,7 @@ void ConvertSQLtoVIBe::run() {
         return;
     }
 
-    //Get Grid Informations
+    //Import Stuff for Gridcells
     sr = query.exec("SELECT * FROM gridcells");
     if (!sr) {
         Logger(Error) << query.lastError().text().toStdString();
@@ -89,6 +114,15 @@ void ConvertSQLtoVIBe::run() {
     }
 
     int numberOfFields = query.record().count();
+    std::map<std::string, int> UUIDtoUrbanSimID_Grid;
+    std::vector<std::string> names = city->getUUIDsOfComponentsInView(grids);
+    foreach (std::string uuid, names){
+        Component * cmp = this->city->getComponent(uuid);
+        UUIDtoUrbanSimID_Grid[uuid] = (int)cmp->getAttribute("UrbanSim_ID")->getDouble();
+    }
+
+
+
 
     int index_grid_id = query.record().indexOf("grid_id");
     while (query.next()) {
@@ -105,10 +139,19 @@ void ConvertSQLtoVIBe::run() {
         }
         this->GridData_out->setAttributes(ss.str(), attr);
     }
+
+
+
+
+
+
+
+
+
     //Set status of all households dead. The status is set alive when household still exists.
     foreach (std::string name, names_existing_Households) {
-        Attribute attr = this->GridData_out->getAttributes(name);
-        attr.setAttribute("exists", false);
+        Component * attr = city->getComponent(name);
+        attr->addAttribute("exists", false);
         this->GridData_out->setAttributes(name, attr);
     }
 
