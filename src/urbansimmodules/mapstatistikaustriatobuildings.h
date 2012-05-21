@@ -27,20 +27,18 @@
 #ifndef MAPSTATISTIKAUSTRIATOBUILDINGS_H
 #define MAPSTATISTIKAUSTRIATOBUILDINGS_H
 
-#include "module.h"
-using namespace vibens;
+#include "dmmodule.h"
+using namespace DM;
 /**
   * @ingroup UrbanSim
   * Based the Dataset A and C of the Statistik Austria
   * @author Christian Urich
   */
-class VIBE_HELPER_DLL_EXPORT MapStatistikAustriaToBuildings : public Module
+class DM_HELPER_DLL_EXPORT MapStatistikAustriaToBuildings : public Module
 {
-    VIBe_DECLARE_NODE(MapStatistikAustriaToBuildings)
+    DM_DECLARE_NODE(MapStatistikAustriaToBuildings)
     private:
-        VectorData * buildings_in;
-        VectorData * grid_in;
-        VectorData * buildings_out;
+        DM::System * city;
         std::string IdentifierBuildings;
         std::string IdentifierGrid;
         std::string IdentifierAttribute;

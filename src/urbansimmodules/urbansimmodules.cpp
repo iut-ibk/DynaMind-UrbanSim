@@ -25,8 +25,8 @@
  */
 
 #include <iostream>
-#include "nodefactory.h"
-#include "moduleregistry.h"
+#include "dmnodefactory.h"
+#include "dmmoduleregistry.h"
 #include "createhouseholds.h"
 #include "exporttodatabase.h"
 #include "urbansimconfig.h"
@@ -39,10 +39,10 @@
 #include "mapstatistikaustriatobuildings.h"
 /**
   * @addtogroup UrbanSim
-  * @brief The UrbanSim modules provide the interfaces to run UrbanSim simulations in the VIBe environment
+  * @brief The UrbanSim modules provide the interfaces to run UrbanSim simulations in the DynaMind environment
   * @author Christian Urich
   */
-extern "C" void VIBE_HELPER_DLL_EXPORT  registerModules(ModuleRegistry *registry) {
+extern "C" void DM_HELPER_DLL_EXPORT  registerModules(ModuleRegistry *registry) {
     registry->addNodeFactory(new NodeFactory<CreateHouseHolds>());
     registry->addNodeFactory(new NodeFactory<ExportToDataBase>());
     registry->addNodeFactory(new NodeFactory<UrbanSimConfig>());

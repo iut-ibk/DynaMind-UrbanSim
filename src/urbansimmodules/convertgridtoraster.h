@@ -27,8 +27,8 @@
 #ifndef CONVERTGRIDTORASTER_H
 #define CONVERTGRIDTORASTER_H
 
-#include "module.h"
-using namespace vibens;
+#include "dmmodule.h"
+using namespace DM;
 /** @brief Converts grid referenced UrbanSim tables to rasterdata
   *
   * As input data of the urban environment are required. Grid referenced entries in a table can be projected on the grid cell
@@ -36,11 +36,11 @@ using namespace vibens;
   * @author Christian Urich
   * For UrbanSim tables @see ConvertSQLtoVIBe
   */
-class VIBE_HELPER_DLL_EXPORT ConvertGridToRaster : public  Module {
-    VIBe_DECLARE_NODE (ConvertGridToRaster)
+class DM_HELPER_DLL_EXPORT ConvertGridToRaster : public  Module {
+    DM_DECLARE_NODE (ConvertGridToRaster)
 
-    VectorData * input;
-    RasterData * outPut;
+    DM::System * city;
+    DM::System * raster_out;
     std::string identifierGrid;
     std::string identifierTable;
     std::string identifierValues;

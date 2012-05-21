@@ -26,9 +26,9 @@
 
 
 #include "convertgridtoraster.h"
-#include "vectordatahelper.h"
 
-VIBe_DECLARE_NODE_NAME(ConvertGridToRaster, UrbanSim)
+
+DM_DECLARE_NODE_NAME(ConvertGridToRaster, UrbanSim)
 
 
 ConvertGridToRaster::ConvertGridToRaster()

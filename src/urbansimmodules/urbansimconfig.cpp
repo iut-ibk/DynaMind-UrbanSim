@@ -26,9 +26,9 @@
 
 #include "urbansimconfig.h"
 
+#include <sstream>
 
-
-VIBe_DECLARE_NODE_NAME(UrbanSimConfig, UrbanSim)
+DM_DECLARE_NODE_NAME(UrbanSimConfig, UrbanSim)
 UrbanSimConfig::UrbanSimConfig()
 {
     this->DBName = "urbansim_export_test";
@@ -36,11 +36,11 @@ UrbanSimConfig::UrbanSimConfig()
     this->DeleteExistingDB = false;
     this->isGridCell = true;
     this->YearsToRun = 20;
-    this->addParameter("DBName", VIBe2::STRING,& this->DBName);
-    this->addParameter("TableName", VIBe2::STRING, & this->TableName);
-    this->addParameter("GridCell", VIBe2::BOOL, &this->isGridCell);
-    this->addParameter("DeleteExistingDB", VIBe2::BOOL, &this->DeleteExistingDB);
-    this->addParameter("YearToRun", VIBe2::INT, & this->YearsToRun);
+    this->addParameter("DBName", DM::STRING,& this->DBName);
+    this->addParameter("TableName", DM::STRING, & this->TableName);
+    this->addParameter("GridCell", DM::BOOL, &this->isGridCell);
+    this->addParameter("DeleteExistingDB", DM::BOOL, &this->DeleteExistingDB);
+    this->addParameter("YearToRun", DM::INT, & this->YearsToRun);
 
 }
 

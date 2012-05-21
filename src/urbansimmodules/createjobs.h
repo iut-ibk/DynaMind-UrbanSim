@@ -27,17 +27,21 @@
 #ifndef CREATEJOBS_H
 #define CREATEJOBS_H
 
-#include "module.h"
-using namespace vibens;
+#include "dmmodule.h"
+#include <dm.h>
+using namespace DM;
 /** @ingroup UrbanSim
   * @author Christian Urich
+  *
+  * @brief Creates inital job data set for an grid based UrbanSim simulation
   */
-class VIBE_HELPER_DLL_EXPORT CreateJobs : public  Module {
-VIBe_DECLARE_NODE(CreateJobs)
+class DM_HELPER_DLL_EXPORT CreateJobs : public  Module {
+DM_DECLARE_NODE(CreateJobs)
 private:
     std::string IdentifierGrid;
-    VectorData * Jobs;
-    VectorData * Jobs_out;
+    DM::System * city;
+    DM::View grids;
+    DM::View jobs;
 public:
     CreateJobs();
     void run();

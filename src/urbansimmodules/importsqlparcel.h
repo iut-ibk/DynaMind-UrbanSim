@@ -26,20 +26,26 @@
 
 #ifndef IMPORTSQLPARCEL_H
 #define IMPORTSQLPARCEL_H
-#include "module.h"
-using namespace vibens;
+#include <dmmodule.h>
+#include <dm.h>
+using namespace DM;
 /**
   * @ingroup UrbanSim
   * @author Christian Urich
+  * @brief Imports results from a parcel based UrbanSim simulation
   */
-class VIBE_HELPER_DLL_EXPORT ImportSQLParcel : public Module
+class DM_HELPER_DLL_EXPORT ImportSQLParcel : public Module
 {
-    VIBe_DECLARE_NODE(ImportSQLParcel)
+    DM_DECLARE_NODE(ImportSQLParcel)
 
     private:
-        VectorData * UrbanEnvironment_In;
-        VectorData * UrbanEnvironment_Out;
+        DM::System * city;
         int Year;
+
+        DM::View parcels;
+        DM::View households;
+        DM::View buildings;
+        DM::View persons;
 public:
     ImportSQLParcel();
     void run();

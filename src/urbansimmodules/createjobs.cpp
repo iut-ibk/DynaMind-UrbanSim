@@ -25,48 +25,58 @@
  */
 
 #include "createjobs.h"
-#include "vectordatahelper.h"
-VIBe_DECLARE_NODE_NAME(CreateJobs, UrbanSim)
+
+DM_DECLARE_NODE_NAME(CreateJobs, UrbanSim)
 CreateJobs::CreateJobs()
 {
-    this->IdentifierGrid = "GRID_";
-    this->addParameter("Jobs", VIBe2::VECTORDATA_IN, &Jobs);
-    this->addParameter("IdentifierGrid", VIBe2::STRING, &IdentifierGrid);
-    this->addParameter("Jobs_out", VIBe2::VECTORDATA_OUT, &Jobs_out);
-}
-void CreateJobs::run() {
+    grids = DM::View("Grid", DM::FACE, DM::READ);
+    grids.getAttribute("grid_id");
+    grids.getAttribute("population");
 
-    *(Jobs_out) = *(Jobs);
-    std::vector<std::string> ids = VectorDataHelper::findElementsWithIdentifier(this->IdentifierGrid, this->Jobs->getAttributeNames());
+    jobs = DM::View("Jobs", DM::COMPONENT, DM::WRITE);
+    jobs.addAttribute("job_id");
+    jobs.addAttribute("home_based");
+    jobs.addAttribute("sector_id");
+    jobs.addAttribute("building_type");
+    jobs.addAttribute("grid_id");
+    jobs.addAttribute("grid_UUID");
+
+    std::vector<DM::View> city_data;
+    city_data.push_back(grids);
+    city_data.push_back(jobs);
+
+    this->addData("city", city_data);
+
+}
+void CreateJobs::run() {    
+    this->city = this->getData("city");
+    std::vector<std::string> ids = city->getUUIDsOfComponentsInView(grids);
     unsigned long JobCounter = 1;
     foreach (std::string id, ids) {
-        Attribute attr = this->Jobs->getAttributes(id);
+        Component * grid = this->city->getComponent(id);
 
 
-        long population = (long) attr.getAttribute("Population");
-        long grid_id = (int) attr.getAttribute("GRID_ID");
+        long population = (long) grid->getAttribute("population")->getDouble();
+        long grid_id = (int) grid->getAttribute("grid_id")->getDouble();
 
         do {
             int size = rand() % 10 + 1;
 
-            Attribute job;
-            job.setAttribute("GRID_ID", grid_id);
-            job.setAttribute("job_id", JobCounter);
-            job.setAttribute("home_based", 0 );
-            job.setAttribute("sector_id", 1);
-            job.setAttribute("building_type", 1);
-            stringstream ss;
-            ss << "Job_";
-            ss << JobCounter;
-
-            this->Jobs_out->setAttributes(ss.str(), job);
+            Component * job = this->city->addComponent(new Component(), jobs);
+            job->addAttribute("grid_id", grid_id);
+            job->addAttribute("job_id", JobCounter);
+            job->addAttribute("home_based", 0 );
+            job->addAttribute("sector_id", 1);
+            job->addAttribute("building_type", 1);
+            Attribute uuid("grid_UUID");
+            uuid.setString(id);
+            job->addAttribute(uuid);
             population = population-size;
             JobCounter++;
-
         } while (population > 0);
 
 
 
     }
-    Logger(Debug) <<(long) JobCounter << "Households created";
+    Logger(Debug) <<(long) JobCounter << "Jobs created";
 }

@@ -56,7 +56,7 @@ ConvertSQLtoVIBe::ConvertSQLtoVIBe()
 
 
     grids = DM::View("GRID", DM::FACE, DM::READ);
-    grids.getAttribute("UrbanSim_ID");
+    grids.getAttribute("urbansim_id");
 
 
 
@@ -90,7 +90,6 @@ void ConvertSQLtoVIBe::run() {
 
     //Set Population to 0;
 
-
     std::vector<std::string> names = city->getUUIDsOfComponentsInView(grids);
     std::vector<std::string> names_existing_Households = city->getUUIDsOfComponentsInView(households);
 
@@ -114,51 +113,30 @@ void ConvertSQLtoVIBe::run() {
     }
 
     int numberOfFields = query.record().count();
-    std::map<std::string, int> UUIDtoUrbanSimID_Grid;
-    std::vector<std::string> names = city->getUUIDsOfComponentsInView(grids);
+    std::map<int, std::string> UUIDtoUrbanSimID_Grid;
+    names = city->getUUIDsOfComponentsInView(grids);
     foreach (std::string uuid, names){
         Component * cmp = this->city->getComponent(uuid);
-        UUIDtoUrbanSimID_Grid[uuid] = (int)cmp->getAttribute("UrbanSim_ID")->getDouble();
+        UUIDtoUrbanSimID_Grid[(int)cmp->getAttribute("urbansim_id")->getDouble()]=uuid;
     }
 
 
 
 
+    //Update Grid
     int index_grid_id = query.record().indexOf("grid_id");
     while (query.next()) {
-        std::stringstream ss;
-        ss << this->identifier <<  query.value(index_grid_id).toInt();
-        Attribute attr = this->GridData_out->getAttributes(ss.str());
+        std::string urbansim_id_grid = UUIDtoUrbanSimID_Grid[index_grid_id];
+        DM::Component * cmp = this->city->getComponent(urbansim_id_grid);
         for (int i = 0; i < numberOfFields; i++) {
             if (i == index_grid_id )
                 continue;
             QString name = query.record().fieldName(i);
-            attr.setAttribute(name.toStdString(), query.value(i).toDouble());
-
-
+            cmp->addAttribute(name.toStdString(), query.value(i).toDouble());
         }
-        this->GridData_out->setAttributes(ss.str(), attr);
     }
 
-
-
-
-
-
-
-
-
-    //Set status of all households dead. The status is set alive when household still exists.
-    foreach (std::string name, names_existing_Households) {
-        Component * attr = city->getComponent(name);
-        attr->addAttribute("exists", false);
-        this->GridData_out->setAttributes(name, attr);
-    }
-
-
-
-
-
+    //Caluclate Population
     sr = query.exec("SELECT grid_id, persons FROM households");
     if (!sr) {
         Logger(Error) << query.lastError().text().toStdString();
@@ -184,12 +162,24 @@ void ConvertSQLtoVIBe::run() {
     foreach (std::string name, names) {
         int pos = name.find("_");
         std::string id =name.substr(pos+1, name.size()-1);
-        Attribute attr = this->GridData_out->getAttributes(name);
-        attr.setAttribute("Population",pop[QString::fromStdString(id).toInt()] );
-        this->GridData_out->setAttributes(name, attr);
-
+        std::string urbansim_id_grid = UUIDtoUrbanSimID_Grid[QString::fromStdString(id).toInt()];
+        Component * cmp = this->city->getComponent(urbansim_id_grid);
+        cmp->addAttribute("Population",pop[QString::fromStdString(id).toInt()] );
     }
 
+    std::map< int, std::string> UUIDtoUrbanSimID_Household;
+    names = city->getUUIDsOfComponentsInView(grids);
+    foreach (std::string uuid, names){
+        Component * cmp = this->city->getComponent(uuid);
+        UUIDtoUrbanSimID_Household[(int)cmp->getAttribute("urbansim_id")->getDouble()]=uuid;
+    }
+
+    //Set status of all households dead. The status is set alive when household still exists.
+    foreach (std::string name, names_existing_Households) {
+        Component * attr = city->getComponent(name);
+        attr->addAttribute("exists", false);
+
+    }
     sr = query.exec("SELECT * FROM households");
     if (!sr) {
         Logger(Error) << query.lastError().text().toStdString();
@@ -206,27 +196,26 @@ void ConvertSQLtoVIBe::run() {
         int age_of_head = query.record().indexOf("age_of_head");
         int children = query.record().indexOf("children");
 
-        std::stringstream ss;
-        ss << this->identifier_households << query.value(household_id).toInt();
-        Attribute attr = this->GridData_out->getAttributes(ss.str());
-        attr.setAttribute("exists", true);
-        attr.setAttribute("cars", query.value(cars).toDouble());
-        attr.setAttribute("workers", query.value(workers).toDouble());
-        attr.setAttribute("GRID_ID", query.value(GRID_ID).toDouble());
-        attr.setAttribute("persons", query.value(persons).toDouble());
-        attr.setAttribute("race_id", query.value(race_id).toDouble());
-        attr.setAttribute("income", query.value(income).toDouble());
-        attr.setAttribute("age_of_head", query.value(age_of_head).toDouble());
-        attr.setAttribute("children", query.value(children).toDouble());
-        this->GridData_out->setAttributes(ss.str(), attr);
+        std::string houeshold_dm = UUIDtoUrbanSimID_Household[query.value(household_id).toInt()];
+        Component * cmp = this->city->getComponent(houeshold_dm);
+
+        cmp->addAttribute("exists", true);
+        cmp->addAttribute("cars", query.value(cars).toDouble());
+        cmp->addAttribute("workers", query.value(workers).toDouble());
+        cmp->addAttribute("grid_id", query.value(GRID_ID).toDouble());
+        cmp->addAttribute("persons", query.value(persons).toDouble());
+        cmp->addAttribute("race_id", query.value(race_id).toDouble());
+        cmp->addAttribute("income", query.value(income).toDouble());
+        cmp->addAttribute("age_of_head", query.value(age_of_head).toDouble());
+        cmp->addAttribute("children", query.value(children).toDouble());
     }
 
     Logger(Standard) << "Total Population" << pop_total;
 
     foreach (std::string name, names_existing_Households) {
-        Attribute attr = this->GridData_out->getAttributes(name);
-        if (! (bool) attr.getAttribute("exists"))
-            this->GridData_out->setAttributes(name, Attribute());
+        Component * cmp = this->city->getComponent(name);
+        if (! (bool) cmp->getAttribute("exists"))
+            this->city->removeComponent(cmp->getUUID());
     }
 
     db.close();

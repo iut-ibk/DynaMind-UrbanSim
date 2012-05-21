@@ -32,7 +32,7 @@ CreateHouseHolds::CreateHouseHolds()
     this->YearsToRun = 20;
 
     grids = DM::View("GRID", DM::FACE, DM::READ);
-     grids.getAttribute("Population");
+    grids.getAttribute("Population");
     prognsis = DM::View("HOUSEHOLD_PROGNOSIS", DM::COMPONENT, DM::WRITE);
     prognsis.addAttribute("year");
     prognsis.addAttribute("race_id");

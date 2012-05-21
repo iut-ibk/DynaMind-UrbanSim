@@ -28,21 +28,20 @@
 #ifndef REMOVESMALLELEMENTS_H
 #define REMOVESMALLELEMENTS_H
 
-#include "module.h"
+#include "dmmodule.h"
 
-using namespace vibens;
+using namespace DM;
 
 /**
   * @ingroup UrbanSim
   * @author Christian Urich
   */
-class VIBE_HELPER_DLL_EXPORT RemoveSmallElements : public Module
+class DM_HELPER_DLL_EXPORT RemoveSmallElements : public Module
 {
-    VIBe_DECLARE_NODE(RemoveSmallElements)
+    DM_DECLARE_NODE(RemoveSmallElements)
 
 private:
-    VectorData * input;
-    VectorData * output;
+    DM::System * city;
     std::string Identifier;
     double Size;
 public:

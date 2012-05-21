@@ -26,12 +26,12 @@
 
 #ifndef CREATEDEVELOPMENTHISTORYDB_H
 #define CREATEDEVELOPMENTHISTORYDB_H
-#include "module.h"
-using namespace vibens;
-class VIBE_HELPER_DLL_EXPORT CreateDevelopmentHistoryDB : public  Module {
-VIBe_DECLARE_NODE( CreateDevelopmentHistoryDB)
+#include "dmmodule.h"
+using namespace DM;
+class DM_HELPER_DLL_EXPORT CreateDevelopmentHistoryDB : public  Module {
+DM_DECLARE_NODE( CreateDevelopmentHistoryDB)
 private:
-    VectorData * VecIn;
+    DM::System * VecIn;
 public:
     CreateDevelopmentHistoryDB();
     void run();

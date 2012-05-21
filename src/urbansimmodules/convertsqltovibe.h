@@ -33,7 +33,7 @@
 using namespace DM;
 /**
   * @ingroup UrbanSim
-  * @brief This VIBe2 module imports the UrbanSim results from the MySQlDatabase to the VectorData format from VIBe
+  * @brief This DynaMind module imports the UrbanSim results from the MySQlDatabase
   *
   * As input the grid is required. If a table already exists the module updates, adds and deletes entries in the existing.
   * Therefore all existing elements in the input VectorData set are marked with the attribute exists == false.
@@ -50,11 +50,6 @@ using namespace DM;
   *     - age_of_head
   *     - children
   *
-  * @author Christian Urich
-  */
-
-
-/** @ingroup UrbanSim
   * @author Christian Urich
   */
 class DM_HELPER_DLL_EXPORT ConvertSQLtoVIBe : public  Module {
