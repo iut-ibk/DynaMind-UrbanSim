@@ -32,7 +32,6 @@
 #include "urbansimconfig.h"
 #include "createjobs.h"
 #include "convertsqltovibe.h"
-#include "convertgridtoraster.h"
 #include "createdevelopmenthistorydb.h"
 #include "importsqlparcel.h"
 #include "removesmallelements.h"
@@ -48,7 +47,6 @@ extern "C" void DM_HELPER_DLL_EXPORT  registerModules(ModuleRegistry *registry) 
     registry->addNodeFactory(new NodeFactory<UrbanSimConfig>());
     registry->addNodeFactory(new NodeFactory<CreateJobs>());
     registry->addNodeFactory(new NodeFactory<ConvertSQLtoVIBe>());
-    registry->addNodeFactory(new NodeFactory<ConvertGridToRaster>());
     registry->addNodeFactory(new NodeFactory<CreateDevelopmentHistoryDB>());
     registry->addNodeFactory(new NodeFactory<ImportSQLParcel>());
     registry->addNodeFactory(new NodeFactory<RemoveSmallElements>());

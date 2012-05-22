@@ -31,7 +31,7 @@ using namespace DM;
 class DM_HELPER_DLL_EXPORT CreateDevelopmentHistoryDB : public  Module {
 DM_DECLARE_NODE( CreateDevelopmentHistoryDB)
 private:
-    DM::System * VecIn;
+
 public:
     CreateDevelopmentHistoryDB();
     void run();

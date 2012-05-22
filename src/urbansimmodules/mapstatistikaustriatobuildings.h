@@ -28,6 +28,7 @@
 #define MAPSTATISTIKAUSTRIATOBUILDINGS_H
 
 #include "dmmodule.h"
+#include "dm.h"
 using namespace DM;
 /**
   * @ingroup UrbanSim
@@ -44,6 +45,9 @@ class DM_HELPER_DLL_EXPORT MapStatistikAustriaToBuildings : public Module
         std::string IdentifierAttribute;
         std::string toAttribute;
         bool asInteger;
+
+        DM::View grids;
+        DM::View buildings;
 
 public:
     MapStatistikAustriaToBuildings();

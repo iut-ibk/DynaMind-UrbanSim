@@ -3,8 +3,8 @@ file(GLOB PYTHONMODULES_M __urbansim/*)
 # Installation of the program
 
 INSTALL(FILES ${PYTHONMODULES}
-        DESTINATION "share/vibe2/scripts/"
+        DESTINATION "lib/DynaMind/scripts"
         PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 INSTALL(FILES ${PYTHONMODULES_M}
-        DESTINATION "share/vibe2/scripts/__urbansim/"
+        DESTINATION "lib/DynaMind/scripts/__urbansim/"
         PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)

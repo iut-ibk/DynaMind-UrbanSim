@@ -26,13 +26,13 @@
 
 #include "createdevelopmenthistorydb.h"
 #include <QtSql>
-
-VIBe_DECLARE_NODE_NAME(CreateDevelopmentHistoryDB, UrbanSim)
+#include <sstream>
+DM_DECLARE_NODE_NAME(CreateDevelopmentHistoryDB, UrbanSim)
 
 
 CreateDevelopmentHistoryDB::CreateDevelopmentHistoryDB()
 {
-    this->addParameter("VecIn", VIBe2::VECTORDATA_IN, &this->VecIn);
+
 }
 
 void CreateDevelopmentHistoryDB::run() {

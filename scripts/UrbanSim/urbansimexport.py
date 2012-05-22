@@ -5,7 +5,7 @@
 @section LICENSE
 
 This file is part of DynaMind
-Copyright (C) 2011  Christian Urich
+Copyright (C) 2012  Christian Urich
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -22,4 +22,31 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
-from UrbanSim import *
+import os
+import sys
+
+from pydynamind import *
+import start_run_vibe
+import start_run_vibe_parcel
+
+class UrbanSimExport(Module):
+	"""
+	@ingroup UrbanSim
+       @brief starts UrbanSim
+	@author Christian Urich
+	"""
+        def __init__(self):
+            Module.__init__(self) 
+            self.createParameter("Parcel", BOOL, "Parcel or Gridbased UrbanSim simulation")
+            self.Parcel = False
+            self.createParameter("YearsToRun", DOUBLE, "UrbanSim simulation years")
+	    self.YearsToRun = 20   
+            
+        def run(self):
+	    if self.Parcel == False:
+		    u = start_run_vibe.UrbanSim_VIBe(int(self.YearsToRun))
+		    u.run()
+	    if self.Parcel == True:
+		    u = start_run_vibe_parcel.UrbanSim_VIBe(int(self.YearsToRun))
+		    u.run()
+ 

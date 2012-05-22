@@ -4,7 +4,7 @@
 @version 1.0
 @section LICENSE
 
-This file is part of DynaMind
+This file is part of VIBe2
 Copyright (C) 2011  Christian Urich
 
 This program is free software; you can redistribute it and/or
@@ -22,4 +22,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
-from UrbanSim import *
+from urbansimexport import *
+from importurbansim import *
+
+
+

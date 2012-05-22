@@ -26,22 +26,21 @@
 
 
 #include "removesmallelements.h"
-#include "vectordatahelper.h"
 
-VIBe_DECLARE_NODE_NAME(RemoveSmallElements, UrbanSim)
+DM_DECLARE_NODE_NAME(RemoveSmallElements, UrbanSim)
 
 RemoveSmallElements::RemoveSmallElements()
 {
     this->Identifier = "";
     this->Size = 0;
-    this->addParameter("Size", VIBe2::DOUBLE, & this->Size);
+    /*this->addParameter("Size", DM::DOUBLE, & this->Size);
     this->addParameter("Identifier", VIBe2::STRING, & this->Identifier);
     this->addParameter("Input", VIBe2::VECTORDATA_IN, & this->input);
-    this->addParameter("Output", VIBe2::VECTORDATA_OUT, & this->output);
+    this->addParameter("Output", VIBe2::VECTORDATA_OUT, & this->output);*/
 }
 
 void RemoveSmallElements::run() {
-    std::vector<std::string> names = VectorDataHelper::findElementsWithIdentifier(this->Identifier, this->input->getFaceNames());
+    /*std::vector<std::string> names = VectorDataHelper::findElementsWithIdentifier(this->Identifier, this->input->getFaceNames());
 
     foreach(std::string name, names) {
         std::vector<Face> faces = this->input->getFaces(name);
@@ -61,5 +60,5 @@ void RemoveSmallElements::run() {
             this->output->setAttributes(name, attr);
         }
 
-    }
+    }*/
 }

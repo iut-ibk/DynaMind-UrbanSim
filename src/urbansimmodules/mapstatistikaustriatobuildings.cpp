@@ -26,9 +26,8 @@
 
 #include "mapstatistikaustriatobuildings.h"
 #include <QPolygonF>
-#include "vectordatahelper.h"
 #include <map>
-VIBe_DECLARE_NODE_NAME(MapStatistikAustriaToBuildings, UrbanSim)
+DM_DECLARE_NODE_NAME(MapStatistikAustriaToBuildings, UrbanSim)
 MapStatistikAustriaToBuildings::MapStatistikAustriaToBuildings()
 {
     this->IdentifierBuildings = "BUILDING_";
@@ -36,83 +35,80 @@ MapStatistikAustriaToBuildings::MapStatistikAustriaToBuildings()
     this->IdentifierAttribute = "";
     this->toAttribute = "";
     this->asInteger = true;
-    this->addParameter("IdentifierBuildings", VIBe2::STRING, &this->IdentifierBuildings);
-    this->addParameter("IdentifierGrid", VIBe2::STRING, &this->IdentifierGrid);
-    this->addParameter("Attribute", VIBe2::STRING, &this->IdentifierAttribute);
-    this->addParameter("toAttribute", VIBe2::STRING, &this->toAttribute);
-    this->addParameter("asInteger", VIBe2::BOOL, &this->asInteger);
-    this->addParameter("BuildingsIn", VIBe2::VECTORDATA_IN, &this->buildings_in);
-    this->addParameter("GRID", VIBe2::VECTORDATA_IN, &this->grid_in);
-    this->addParameter("BuildingsOut", VIBe2::VECTORDATA_OUT, &this->buildings_out);
+
+    this->addParameter("Attribute", DM::STRING, &this->IdentifierAttribute);
+    this->addParameter("toAttribute", DM::STRING, &this->toAttribute);
+    this->addParameter("asInteger", DM::BOOL, &this->asInteger);
+
+
+    grids = DM::View("Grid", DM::FACE, DM::READ);
+    buildings = DM::View("Buildings", DM::SUBSYSTEM, DM::READ);
+    buildings.getAttribute("centroid_x");
+    buildings.getAttribute("centroid_y");
+    std::vector<DM::View> views;
+
+    views.push_back(grids);
+    views.push_back(buildings);
+
+
+    this->addData("city", views);
+
 }
 
 void MapStatistikAustriaToBuildings::run() {
 
-    *(buildings_out) = *(buildings_in);
+    city = this->getData("city");
 
     //CreateVectorToFindData
 
     std::vector<QPointF> building_centeroids;
-    std::vector<int> building_id;
-    std::vector<std::string> buildings_names = VectorDataHelper::findElementsWithIdentifier(this->IdentifierBuildings, buildings_in->getAttributeNames());
-    std::stringstream buildings_id_string;
-    buildings_id_string << this->IdentifierBuildings << "ID";
+    std::vector<std::string> building_uuid;
+    std::vector<std::string> buildings_names =city->getUUIDsOfComponentsInView(buildings);
+
 
     foreach (std::string name, buildings_names) {
-        Attribute attr;
-        attr = this->buildings_in->getAttributes(name);
-        building_centeroids.push_back(QPointF(attr.getAttribute("centroid_x"), attr.getAttribute("centroid_y")));
-        building_id.push_back(attr.getAttribute(buildings_id_string.str()));
+        Component * attr = city->getComponent(name);
+        building_centeroids.push_back(QPointF(attr->getAttribute("centroid_x")->getDouble(), attr->getAttribute("centroid_y")->getDouble()));
+        building_uuid.push_back(name);
 
     }
 
-    std::vector<std::string> grid_names = VectorDataHelper::findElementsWithIdentifier(this->IdentifierGrid, grid_in->getAttributeNames());
+    std::vector<std::string> grid_names = this->city->getUUIDsOfComponentsInView(grids);
 
     foreach (std::string name, grid_names) {
-
-
-        std::vector<Face> faces = this->grid_in->getFaces(name);
-        std::vector<Point> points = this->grid_in->getPoints(name);
+        std::vector<std::string> points = city->getFace(name)->getNodes();
         QPolygonF poly;
-        foreach (Face f, faces) {
-            std::vector<long> ids = f.getIDs();
-            for (int i = 0; i < ids.size(); i++) {
-                poly.push_back(QPointF(points[ids[i]].x, points[ids[i]].y));
-            }
+        foreach (std::string p, points) {
+                poly.push_back(QPointF(city->getNode(p)->getX(), city->getNode(p)->getY()));
+
         }
 
         //Find all Elements in GridCell
-        std::vector<int> buildingIdsInGridCell;
+        std::vector<std::string> buildingIdsInGridCell;
 
         for (int i = 0; i <building_centeroids.size(); i++ ) {
 
             if (poly.containsPoint(building_centeroids[i], Qt::WindingFill)) {
-                buildingIdsInGridCell.push_back(building_id[i]);
+                buildingIdsInGridCell.push_back(building_uuid[i]);
             }
         }
 
-        //Append Attributes to Buildings
-
-        Attribute grid_attribute = this->grid_in->getAttributes(name);
-
-        double totalValue = grid_attribute.getAttribute(this->IdentifierAttribute);
-
-        double Val = totalValue / buildingIdsInGridCell.size();
+        Component * grid_attr = city->getComponent(name);
 
 
         //Persons in Cell
         double Persons = 0;
-        Persons+= grid_attribute.getAttribute("ledig");
-        Persons+= grid_attribute.getAttribute("verwitwet");
-        Persons+= grid_attribute.getAttribute("verheirate");
+        Persons+= grid_attr->getAttribute("ledig")->getDouble();
+        Persons+= grid_attr->getAttribute("verwitwet")->getDouble();
+        Persons+= grid_attr->getAttribute("verheirate")->getDouble();
 
 
-        double ResidentialUnits = grid_attribute.getAttribute("Whg01");
+        double ResidentialUnits = grid_attr->getAttribute("Whg01")->getDouble();
 
 
-        double Household1 = grid_attribute.getAttribute("PHH_1Pers");
-        double Household2 = grid_attribute.getAttribute("PHH_2Pers");
-        double Household3 = grid_attribute.getAttribute("PHH_3Pers");
+        double Household1 = grid_attr->getAttribute("PHH_1Pers")->getDouble();
+        double Household2 = grid_attr->getAttribute("PHH_2Pers")->getDouble();
+        double Household3 = grid_attr->getAttribute("PHH_3Pers")->getDouble();
 
         double PersonsHouseholds = Household1+ Household2*2+Household3*3;
 
@@ -124,38 +120,25 @@ void MapStatistikAustriaToBuildings::run() {
         AttributesOut["PHouseholds"] = PersonsHouseholds;
 
         double areaTot = 0;
-        foreach (int id, buildingIdsInGridCell) {
-            std::stringstream buildingid;
-            buildingid << this->IdentifierBuildings << id;
-            Attribute building_attr = this->buildings_out->getAttributes(buildingid.str());
-            areaTot+=building_attr.getAttribute("area");
+        foreach (std::string id, buildingIdsInGridCell) {
+            areaTot+=this->city->getComponent(id)->getAttribute("area")->getDouble();
         }
 
 
         //Create Households
-        foreach (int id, buildingIdsInGridCell) {
-            std::stringstream buildingid;
-            buildingid << this->IdentifierBuildings << id;
-            Attribute building_attr = this->buildings_out->getAttributes(buildingid.str());
-
+        foreach (std::string id, buildingIdsInGridCell) {
+            Component * building_attr = this->city->getComponent(id);
             for (std::map<std::string, double>::iterator it = AttributesOut.begin(); it != AttributesOut.end(); ++it ) {
-
-                double val = it->second/areaTot*building_attr.getAttribute("area");
+                double val = it->second/areaTot*building_attr->getAttribute("area")->getDouble();
                 if (asInteger)
                     val = (int) val;
-                building_attr.setAttribute(it->first, val );
-
+                building_attr->addAttribute(it->first, val );
                 AttributesOut[it->first] = AttributesOut[it->first]- val;
             }
-            areaTot-= building_attr.getAttribute("area");
 
-            this->buildings_out->setAttributes(buildingid.str(), building_attr);
-
+            areaTot-= building_attr->getAttribute("area")->getDouble();
         }
-
         Logger(Debug) << "Buildings in Cell" << buildingIdsInGridCell.size();
-
-
     }
 
 
