@@ -42,9 +42,10 @@ MapStatistikAustriaToBuildings::MapStatistikAustriaToBuildings()
 
 
     grids = DM::View("Grid", DM::FACE, DM::READ);
-    buildings = DM::View("Buildings", DM::SUBSYSTEM, DM::READ);
+    buildings = DM::View("Building", DM::FACE, DM::READ);
     buildings.getAttribute("centroid_x");
     buildings.getAttribute("centroid_y");
+    buildings.addAttribute("Persons");
     std::vector<DM::View> views;
 
     views.push_back(grids);
