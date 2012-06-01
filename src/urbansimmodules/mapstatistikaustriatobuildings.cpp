@@ -4,9 +4,9 @@
  * @version 1.0
  * @section LICENSE
  *
- * This file is part of VIBe2
+ * This file is part of DynaMind
  *
- * Copyright (C) 2011  Christian Urich
+ * Copyright (C) 2011-2012  Christian Urich
 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -42,10 +42,13 @@ MapStatistikAustriaToBuildings::MapStatistikAustriaToBuildings()
 
 
     grids = DM::View("Grid", DM::FACE, DM::READ);
+    grids.addAttribute("Buildings");
     buildings = DM::View("Building", DM::FACE, DM::READ);
     buildings.getAttribute("centroid_x");
     buildings.getAttribute("centroid_y");
     buildings.addAttribute("Persons");
+    buildings.addAttribute("Grid_UUID");
+
     std::vector<DM::View> views;
 
     views.push_back(grids);
@@ -129,6 +132,10 @@ void MapStatistikAustriaToBuildings::run() {
         //Create Households
         foreach (std::string id, buildingIdsInGridCell) {
             Component * building_attr = this->city->getComponent(id);
+            Attribute grid_uuid("Grid_UUID");
+            grid_uuid.setString(grid_attr->getUUID());
+            building_attr->addAttribute(grid_uuid);
+
             for (std::map<std::string, double>::iterator it = AttributesOut.begin(); it != AttributesOut.end(); ++it ) {
                 double val = it->second/areaTot*building_attr->getAttribute("area")->getDouble();
                 if (asInteger)
@@ -140,6 +147,8 @@ void MapStatistikAustriaToBuildings::run() {
             areaTot-= building_attr->getAttribute("area")->getDouble();
         }
         Logger(Debug) << "Buildings in Cell" << buildingIdsInGridCell.size();
+
+        grid_attr->addAttribute("Buildings", buildingIdsInGridCell.size());
     }
 
 
