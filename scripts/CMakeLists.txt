@@ -1,10 +1,29 @@
-file(GLOB PYTHONMODULES *.py)
-file(GLOB PYTHONMODULES_M UrbanSim/*)
-# Installation of the program
+FILE(COPY ${dynamind-urbansim_SOURCE_DIR}/scripts DESTINATION ${SCRIPT_PATH})
 
-INSTALL(FILES ${PYTHONMODULES}
-        DESTINATION "lib/DynaMind/scripts"
-        PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-INSTALL(FILES ${PYTHONMODULES_M}
-        DESTINATION "lib/DynaMind/scripts/UrbanSim/"
-        PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+MACRO(list_subdirectories retval curdir return_relative)
+  FILE(GLOB sub-dir RELATIVE ${curdir} *)
+  SET(list_of_dirs "")
+  FOREACH(dir ${sub-dir})
+    IF(IS_DIRECTORY ${curdir}/${dir})
+      IF(${return_relative})
+        SET(list_of_dirs ${list_of_dirs} ${dir})
+      ELSE()
+        SET(list_of_dirs ${list_of_dirs} ${curdir}/${dir})
+      ENDIF()
+    ENDIF()
+  ENDFOREACH()
+  SET(${retval} ${list_of_dirs})
+  MESSAGE(STATUS "Found subdirectories in ${curdir}: ${list_of_dirs}")
+ENDMACRO()
+
+LIST_SUBDIRECTORIES(DIRS ${dynamind-urbansim_SOURCE_DIR}/scripts/ 1)
+
+
+
+FOREACH(DIR ${DIRS})
+    FILE(GLOB SCRIPTFILES "${dynamind-urbansim_SOURCE_DIR}/scripts/${DIR}/*.py")
+    INSTALL(FILES ${SCRIPTFILES} DESTINATION "${SCRIPT_PATH}/${DIR}")
+ENDFOREACH(DIR)
+
+FILE(GLOB BASESCRIPTS "${dynamind-urbansim_SOURCE_DIR}/scripts/*.py")
+INSTALL(FILES ${BASESCRIPTS} DESTINATION "${SCRIPT_PATH}")
