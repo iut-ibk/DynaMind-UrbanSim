@@ -64,7 +64,6 @@ void MapStatistikAustriaToBuildings::run() {
     city = this->getData("city");
 
     //CreateVectorToFindData
-
     std::vector<QPointF> building_centeroids;
     std::vector<std::string> building_uuid;
     std::vector<std::string> buildings_names =city->getUUIDsOfComponentsInView(buildings);

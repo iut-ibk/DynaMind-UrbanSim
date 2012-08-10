@@ -31,7 +31,7 @@
 DM_DECLARE_NODE_NAME(UrbanSimConfig, UrbanSim)
 UrbanSimConfig::UrbanSimConfig()
 {
-    this->DBName = "urbansim_export_test";
+    this->DBName = "urbansim";
     this->TableName = "urbansim_constants";
     this->DeleteExistingDB = false;
     this->isGridCell = true;
@@ -55,7 +55,9 @@ void UrbanSimConfig::run() {
 
     bool ok = db.open();
     if( ok == false) {
+        db.lastError().text();
         Logger(Error) << "Database failed";
+        Logger(Error) <<db.lastError().text().toStdString();
         return;
     }
 
