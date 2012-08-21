@@ -37,6 +37,7 @@
 #include "removesmallelements.h"
 #include "mapstatistikaustriatobuildings.h"
 #include "joinadressdatatobuildings.h"
+#include "createbuildings.h"
 /**
   * @addtogroup UrbanSim
   * @brief The UrbanSim modules provide the interfaces to run UrbanSim simulations in the DynaMind environment
@@ -53,4 +54,5 @@ extern "C" void DM_HELPER_DLL_EXPORT  registerModules(ModuleRegistry *registry) 
     registry->addNodeFactory(new NodeFactory<RemoveSmallElements>());
     registry->addNodeFactory(new NodeFactory<MapStatistikAustriaToBuildings>());
     registry->addNodeFactory(new NodeFactory<JoinAdressDataToBuildings>());
+    registry->addNodeFactory(new NodeFactory<CreateBuildings>());
 }

@@ -32,17 +32,19 @@ CreateHouseHolds::CreateHouseHolds()
     this->YearsToRun = 20;
 
     grids = DM::View("GRID", DM::FACE, DM::READ);
-    grids.getAttribute("Population");
+    grids.getAttribute("Persons");
+    grids.getAttribute("grid_id");
     prognsis = DM::View("HOUSEHOLD_PROGNOSIS", DM::COMPONENT, DM::WRITE);
     prognsis.addAttribute("year");
     prognsis.addAttribute("race_id");
     prognsis.addAttribute("persons");
     prognsis.addAttribute("total_number_of_households");
 
-    households = DM::View("HOUSEHOLD", DM::NODE, DM::WRITE);
+    households = DM::View("HOUSEHOLD", DM::COMPONENT, DM::WRITE);
     households.addAttribute("persons");
+    households.addAttribute("household_id");
     households.addAttribute("race_id");
-    households.addAttribute("GRID_id");
+    households.addAttribute("grid_id");
     households.addAttribute("income");
     households.addAttribute("cars");
     households.addAttribute("workers");
@@ -52,6 +54,7 @@ CreateHouseHolds::CreateHouseHolds()
     std::vector<DM::View> data;
     data.push_back(grids);
     data.push_back(households);
+    data.push_back(prognsis);
     this->addParameter("YearsToRun", DM::INT, &YearsToRun);
     this->addData("City", data);
 
@@ -202,9 +205,7 @@ void CreateHouseHolds::run() {
     std::vector<std::string> ids = city->getUUIDsOfComponentsInView(grids);
     unsigned long HouseholdCounter = 0;
     foreach (std::string id, ids) {
-
-        long population = (long) city->getComponent(id)->getAttribute("Population")->getDouble();
-
+        long population = (long) city->getComponent(id)->getAttribute("Persons")->getDouble();
         do {
 
             //Demographics for Innsbruck
@@ -225,11 +226,12 @@ void CreateHouseHolds::run() {
             }
 
 
-            DM::Node * household = new DM::Node();
+            if (population - size < 0)
+                size = population;
+            population = population-size;
 
-            Attribute grid_id("GRID_ID");
-            grid_id.setString(id);
-            household->addAttribute(grid_id);
+            DM::Component * household = new DM::Component();
+            household->addAttribute("grid_id", id);
             household->addAttribute("persons", size );
             household->addAttribute("race_id", 1 );
             household->addAttribute("income",   rand() % 50000 + 1);
@@ -237,10 +239,11 @@ void CreateHouseHolds::run() {
             household->addAttribute("workers",   rand() % 3 );
             household->addAttribute("age_of_head",   rand() % 40+20 );
             household->addAttribute("children",   rand() % 2);
+            HouseholdCounter++;
+            household->addAttribute("household_id", HouseholdCounter);
+            this->city->addComponent(household, households);
 
         } while (population > 0);
-
-
 
     }
     Logger(Debug) <<(long) HouseholdCounter << "Households created";
@@ -258,6 +261,8 @@ void CreateHouseHolds::run() {
 
     foreach(std::string id, househildIDs) {
         int persons = (int) city->getComponent(id)->getAttribute("persons")->getDouble();
+        if (persons == 0)
+            continue;
         persons_counter[persons-1] = persons_counter[persons-1]+1;
 
     }
@@ -266,17 +271,13 @@ void CreateHouseHolds::run() {
         househodsizes.push_back(i+1);
 
 
-    for (int year = 1980; year < 1980+YearsToRun; year++) {
-        Component * cmp = new Component();
-        cmp->setName(QString::number(year).toStdString());
-        this->city->addComponent(cmp, prognsis);
-        cmp->addAttribute("year",year);
-        cmp->addAttribute("race_id", 1);
-
+  for (int year = 1980; year < 1980+YearsToRun; year++) {
         for (int i = 0; i < 6; i++) {
-            cmp->addAttribute("persons", i+1);
-
-            //Calculate new placed households
+             //Calculate new placed households
+            Component * cmp = new Component();
+            cmp = this->city->addComponent(cmp, prognsis);
+            cmp->addAttribute("year",year);
+            cmp->addAttribute("race_id", 1);
             if (i < 1) {
                 persons_counter[i] = persons_counter[i]*h1[year-1980];
             } else if ( i < 2) {
@@ -290,15 +291,9 @@ void CreateHouseHolds::run() {
             } else {
                 persons_counter[i] = persons_counter[i]*h6[year-1980];
             }
-
-
+            cmp->addAttribute("total_number_of_households", persons_counter[i]);
+            cmp->addAttribute("persons", i+1);
         }
-        Attribute th ("total_number_of_households");
-        th.setDoubleVector(persons_counter);
-        cmp->addAttribute(th);
 
-        Attribute ps ("persons");
-        ps.setDoubleVector(househodsizes);
-        cmp->addAttribute(ps);
     }
 }

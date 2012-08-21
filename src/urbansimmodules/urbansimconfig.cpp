@@ -25,7 +25,7 @@
  */
 
 #include "urbansimconfig.h"
-
+#include "dm.h"
 #include <sstream>
 
 DM_DECLARE_NODE_NAME(UrbanSimConfig, UrbanSim)
@@ -36,11 +36,17 @@ UrbanSimConfig::UrbanSimConfig()
     this->DeleteExistingDB = false;
     this->isGridCell = true;
     this->YearsToRun = 20;
+
+    std::vector<DM::View> data;
+    data.push_back(  DM::View ("dummy", DM::SUBSYSTEM, DM::WRITE) );
+
     this->addParameter("DBName", DM::STRING,& this->DBName);
     this->addParameter("TableName", DM::STRING, & this->TableName);
     this->addParameter("GridCell", DM::BOOL, &this->isGridCell);
     this->addParameter("DeleteExistingDB", DM::BOOL, &this->DeleteExistingDB);
     this->addParameter("YearToRun", DM::INT, & this->YearsToRun);
+
+    this->addData("City", data);
 
 }
 
@@ -101,15 +107,15 @@ void UrbanSimConfig::run() {
         this->create_plan_type_groups();
         this->create_plan_type_groups_definitions();
         this->create_travle_data();
-        this->create_development_templates();
-        this->create_development_template_components();
         this->create_land_use_types();
         this->create_demolition_cost_per_sqft();
         this->create_employment_sectors();
         this->create_generic_land_use_type_id();
-        this->create_real_estate_price_model_coefficients();
-        this->create_real_estate_price_model_specification();
         this->create_buidling_building_sqft_per_job();
+        this->create_land_price_model_specification();
+        this->create_land_price_model_coefficients();
+        this->create_residential_land_share_model_specification();
+        this->create_residential_land_share_model_coefficients();
     }
     if (!isGridCell) {
         this->create_urbansim_constants();
@@ -474,13 +480,13 @@ void UrbanSimConfig::create_development_types() {
 
     query.prepare( QString::fromStdString(insertstream.str()));
     query.bindValue(":name", "R1");
-    query.bindValue(":min_units", 1);
-    query.bindValue(":max_units", 1);
+    query.bindValue(":min_units", 0);
+    query.bindValue(":max_units", 100000);
     query.bindValue(":min_sqft", 0);
     query.bindValue(":max_sqft", 99);
     sr = query.exec();
 
-    query.bindValue(":name", "R2");
+    /*query.bindValue(":name", "R2");
     query.bindValue(":min_units", 2);
     query.bindValue(":max_units", 4);
     query.bindValue(":min_sqft", 0);
@@ -527,7 +533,7 @@ void UrbanSimConfig::create_development_types() {
     query.bindValue(":max_units", 65000);
     query.bindValue(":min_sqft", 0);
     query.bindValue(":max_sqft", 99);
-    sr = query.exec();
+    sr = query.exec();*/
 
 
 
@@ -603,7 +609,7 @@ void UrbanSimConfig::create_development_constraints() {
 
     query.prepare( QString::fromStdString(insertstream.str()));
     query.bindValue(":min_units", 0);
-    query.bindValue(":max_units", 200);
+    query.bindValue(":max_units", 5);
     query.bindValue(":min_commercial_sqft", 0);
     query.bindValue(":max_commercial_sqft", 9999999);
     query.bindValue(":min_industrial_sqft", 0);
@@ -739,7 +745,7 @@ void UrbanSimConfig::create_development_type_group_definitions() {
     group_id.push_back( 		13  );  development_type_id.push_back(	1);
     group_id.push_back( 		7  );  development_type_id.push_back(	1);
     group_id.push_back( 	 		8  );  development_type_id.push_back(	1);
-    group_id.push_back( 	 		5  );  development_type_id.push_back(	2    );
+/*    group_id.push_back( 	 		5  );  development_type_id.push_back(	2    );
     group_id.push_back( 	 		7  );  development_type_id.push_back(	2    );
     group_id.push_back( 	 		13  );  development_type_id.push_back(	2    );
     group_id.push_back( 	 		8  );  development_type_id.push_back(	2    );
@@ -770,7 +776,7 @@ void UrbanSimConfig::create_development_type_group_definitions() {
     group_id.push_back( 	 		13  );  development_type_id.push_back(	8);
     group_id.push_back( 	 		7  );  development_type_id.push_back(	8);
     group_id.push_back( 	 		5  );  development_type_id.push_back(	8 );
-    group_id.push_back( 	 		8  );  development_type_id.push_back(	8 );
+    group_id.push_back( 	 		8  );  development_type_id.push_back(	8 );*/
 
     for (int i = 0;i < group_id.size(); i++ ) {
         query.prepare( QString::fromStdString(insertstream.str()));
@@ -1312,8 +1318,6 @@ void UrbanSimConfig::create_household_location_choice_model_specification() {
     sr = query.exec();
 
 
-
-
     if (!sr) {
         Logger(Debug) << query.lastError().text().toStdString();
     }
@@ -1798,11 +1802,11 @@ void UrbanSimConfig::create_residential_development_location_choice_model_specif
     Logger(Debug) << insertstream.str();
 
     query.prepare( QString::fromStdString(insertstream.str()));
-    query.bindValue(":sub_model_id", 1);
+    /*query.bindValue(":sub_model_id", 1);
     query.bindValue(":equation_id", -2);
     query.bindValue(":coefficient_name", "PRW");
     query.bindValue(":variable_name", "urbansim.gridcell.percent_residential_within_walking_distance");
-    sr = query.exec();
+    sr = query.exec();*/
 
     /*query.bindValue(":sub_model_id", 1);
     query.bindValue(":equation_id", -2);
@@ -1874,12 +1878,12 @@ void UrbanSimConfig::create_residential_development_location_choice_model_coeffi
     Logger(Debug) << insertstream.str();
 
     query.prepare( QString::fromStdString(insertstream.str()));
-    query.bindValue(":sub_model_id", 1);
+    /*query.bindValue(":sub_model_id", 1);
     query.bindValue(":t_statistic", 10.6604);
     query.bindValue(":coefficient_name", "PRW");
     query.bindValue(":estimate",0.053373);
     query.bindValue(":standard_error", 0.00500667);
-    sr = query.exec();
+    sr = query.exec();*/
 
     /*query.bindValue(":sub_model_id", 1);
     query.bindValue(":t_statistic", 8.06472);
@@ -1896,6 +1900,76 @@ void UrbanSimConfig::create_residential_development_location_choice_model_coeffi
     sr = query.exec();
 
 
+    if (!sr) {
+        Logger(Debug) << query.lastError().text().toStdString();
+    }
+}
+
+void UrbanSimConfig::create_land_price_model_specification()
+{
+    std::string TableName = "land_price_model_specification";
+    QSqlQuery query(db);
+    stringstream ss;
+    bool sr;
+    ss << "CREATE TABLE IF NOT EXISTS ";
+    ss << TableName;
+    ss << " (";
+    ss << "sub_model_id" << " "  << "INT";
+    ss << ", ";
+    ss << "equation_id" << " "  << "INT";
+    ss << ", ";
+    ss << "coefficient_name" << " "  << "TEXT";
+    ss << ", ";
+    ss << "variable_name" << " "  << "TEXT";
+    ss << ")";
+
+
+    Logger(Debug) << ss.str();
+    sr = query.exec(QString::fromStdString(ss.str() ));
+
+    if (!sr) {
+        Logger(Error) << query.lastError().text().toStdString();
+
+    }
+    stringstream insertstream;
+    insertstream << "INSERT INTO " << TableName << "(";
+    insertstream << "sub_model_id" ;
+    insertstream << ", ";
+    insertstream << "equation_id" ;
+    insertstream << ", ";
+    insertstream << "coefficient_name" ;
+    insertstream << ", ";
+    insertstream << "variable_name" ;
+    insertstream  << ") " << " VALUES (";
+
+    insertstream << ":sub_model_id";
+    insertstream << ", ";
+    insertstream << ":equation_id" ;
+    insertstream << ", ";
+    insertstream << ":coefficient_name" ;
+    insertstream << ", ";
+    insertstream << ":variable_name" ;
+    insertstream  << ")";
+    Logger(Debug) << insertstream.str();
+
+    query.prepare( QString::fromStdString(insertstream.str()));
+    query.bindValue(":sub_model_id", -2);
+    query.bindValue(":equation_id",-2);
+    query.bindValue(":coefficient_name", "constant");
+    query.bindValue(":variable_name", "constant");
+
+    sr = query.exec();
+    if (!sr) {
+        Logger(Debug) << query.lastError().text().toStdString();
+    }
+
+    query.prepare( QString::fromStdString(insertstream.str()));
+    query.bindValue(":sub_model_id", -2);
+    query.bindValue(":equation_id",-2);
+    query.bindValue(":coefficient_name", "BLDU");
+    query.bindValue(":variable_name", "urbansim.gridcell.ln_residential_units");
+
+    sr = query.exec();
     if (!sr) {
         Logger(Debug) << query.lastError().text().toStdString();
     }
@@ -2482,6 +2556,83 @@ void UrbanSimConfig::create_generic_land_use_type_id() {
         Logger(Debug) << query.lastError().text().toStdString();
     }
 }
+void UrbanSimConfig::create_land_price_model_coefficients() {
+    std::string TableName = "land_price_model_coefficients";
+    QSqlQuery query(db);
+    stringstream ss;
+    bool sr;
+    ss << "CREATE TABLE IF NOT EXISTS ";
+    ss << TableName;
+    ss << " (";
+    ss << "sub_model_id" << " "  << "INT";
+    ss << ", ";
+    ss << "t_statistic" << " "  << "FLOAT";
+    ss << ", ";
+    ss << "estimate" << " "  << "FLOAT";
+    ss << ", ";
+    ss << "coefficient_name" << " "  << "CHAR(50)";
+    ss << ", ";
+    ss << "standard_error" << " "  << "FLOAT";
+    ss << ")";
+
+
+    Logger(Debug) << ss.str();
+    sr = query.exec(QString::fromStdString(ss.str() ));
+
+    if (!sr) {
+        Logger(Error) << query.lastError().text().toStdString();
+
+    }
+    stringstream insertstream;
+    insertstream << "INSERT INTO " << TableName << "(";
+    insertstream << "sub_model_id" ;
+    insertstream << ", ";
+    insertstream << "t_statistic" ;
+    insertstream << ", ";
+    insertstream << "estimate" ;
+    insertstream << ", ";
+    insertstream << "coefficient_name" ;
+    insertstream << ", ";
+    insertstream << "standard_error" ;
+    insertstream  << ") " << " VALUES (";
+
+    insertstream << ":sub_model_id";
+    insertstream << ", ";
+    insertstream << ":t_statistic" ;
+    insertstream << ", ";
+    insertstream << ":estimate" ;
+    insertstream << ", ";
+    insertstream << ":coefficient_name" ;
+    insertstream << ", ";
+    insertstream << ":standard_error" ;
+
+    insertstream  << ")";
+    Logger(Debug) << insertstream.str();
+
+    query.prepare( QString::fromStdString(insertstream.str()));
+    query.bindValue(":sub_model_id", -2);
+    query.bindValue(":t_statistic", 136.559);
+    query.bindValue(":estimate", 9.81321);
+    query.bindValue(":coefficient_name", "constant");
+    query.bindValue(":standard_error", 0.0718609);
+    sr = query.exec();
+    if (!sr) {
+        Logger(Debug) << query.lastError().text().toStdString();
+    }
+
+    query.prepare( QString::fromStdString(insertstream.str()));
+    query.bindValue(":sub_model_id", -2);
+    query.bindValue(":t_statistic", 19.3251);
+    query.bindValue(":estimate", 0.171131 	);
+    query.bindValue(":coefficient_name", "BLDU");
+    query.bindValue(":standard_error", 0.00885537);
+    sr = query.exec();
+    if (!sr) {
+        Logger(Debug) << query.lastError().text().toStdString();
+    }
+
+}
+
 void UrbanSimConfig::create_real_estate_price_model_coefficients() {
     std::string TableName = "real_estate_price_model_coefficients";
     QSqlQuery query(db);
@@ -2492,13 +2643,13 @@ void UrbanSimConfig::create_real_estate_price_model_coefficients() {
     ss << " (";
     ss << "sub_model_id" << " "  << "INT";
     ss << ", ";
-    ss << "t_statistic" << " "  << "INT";
+    ss << "t_statistic" << " "  << "FLOAT";
     ss << ", ";
-    ss << "estimate" << " "  << "INT";
+    ss << "estimate" << " "  << "FLOAT";
     ss << ", ";
     ss << "coefficient_name" << " "  << "CHAR(50)";
     ss << ", ";
-    ss << "standard_error" << " "  << "INT";
+    ss << "standard_error" << " "  << "FLOAT";
     ss << ")";
 
 
@@ -2575,8 +2726,6 @@ void UrbanSimConfig::create_real_estate_price_model_coefficients() {
     if (!sr) {
         Logger(Debug) << query.lastError().text().toStdString();
     }
-
-
 }
 
 void UrbanSimConfig::create_real_estate_price_model_specification() {
@@ -2708,6 +2857,130 @@ void UrbanSimConfig::create_buidling_building_sqft_per_job() {
     query.bindValue(":zone_id", 1);
     query.bindValue(":building_type_id",1);
     query.bindValue(":building_sqft_per_job", 20);
+    sr = query.exec();
+    if (!sr) {
+        Logger(Debug) << query.lastError().text().toStdString();
+    }
+}
+
+void UrbanSimConfig::create_residential_land_share_model_coefficients() {
+    std::string TableName = "residential_land_share_model_coefficients";
+    QSqlQuery query(db);
+    stringstream ss;
+    bool sr;
+    ss << "CREATE TABLE IF NOT EXISTS ";
+    ss << TableName;
+    ss << " (";
+    ss << "sub_model_id" << " "  << "INT";
+    ss << ", ";
+    ss << "t_statistic" << " "  << "FLOAT";
+    ss << ", ";
+    ss << "estimate" << " "  << "FLOAT";
+    ss << ", ";
+    ss << "coefficient_name" << " "  << "CHAR(50)";
+    ss << ", ";
+    ss << "standard_error" << " "  << "FLOAT";
+    ss << ")";
+
+
+    Logger(Debug) << ss.str();
+    sr = query.exec(QString::fromStdString(ss.str() ));
+
+    if (!sr) {
+        Logger(Error) << query.lastError().text().toStdString();
+
+    }
+    stringstream insertstream;
+    insertstream << "INSERT INTO " << TableName << "(";
+    insertstream << "sub_model_id" ;
+    insertstream << ", ";
+    insertstream << "t_statistic" ;
+    insertstream << ", ";
+    insertstream << "estimate" ;
+    insertstream << ", ";
+    insertstream << "coefficient_name" ;
+    insertstream << ", ";
+    insertstream << "standard_error" ;
+    insertstream  << ") " << " VALUES (";
+
+    insertstream << ":sub_model_id";
+    insertstream << ", ";
+    insertstream << ":t_statistic" ;
+    insertstream << ", ";
+    insertstream << ":estimate" ;
+    insertstream << ", ";
+    insertstream << ":coefficient_name" ;
+    insertstream << ", ";
+    insertstream << ":standard_error" ;
+
+    insertstream  << ")";
+    Logger(Debug) << insertstream.str();
+
+    query.prepare( QString::fromStdString(insertstream.str()));
+    query.bindValue(":sub_model_id", -2);
+    query.bindValue(":t_statistic", 136.559);
+    query.bindValue(":estimate", 9.81321);
+    query.bindValue(":coefficient_name", "constant");
+    query.bindValue(":standard_error", 0.0718609);
+    sr = query.exec();
+    if (!sr) {
+        Logger(Debug) << query.lastError().text().toStdString();
+    }
+
+}
+
+void UrbanSimConfig::create_residential_land_share_model_specification()
+{
+    std::string TableName = "residential_land_share_model_specification";
+    QSqlQuery query(db);
+    stringstream ss;
+    bool sr;
+    ss << "CREATE TABLE IF NOT EXISTS ";
+    ss << TableName;
+    ss << " (";
+    ss << "sub_model_id" << " "  << "INT";
+    ss << ", ";
+    ss << "equation_id" << " "  << "INT";
+    ss << ", ";
+    ss << "coefficient_name" << " "  << "TEXT";
+    ss << ", ";
+    ss << "variable_name" << " "  << "TEXT";
+    ss << ")";
+
+
+    Logger(Debug) << ss.str();
+    sr = query.exec(QString::fromStdString(ss.str() ));
+
+    if (!sr) {
+        Logger(Error) << query.lastError().text().toStdString();
+
+    }
+    stringstream insertstream;
+    insertstream << "INSERT INTO " << TableName << "(";
+    insertstream << "sub_model_id" ;
+    insertstream << ", ";
+    insertstream << "equation_id" ;
+    insertstream << ", ";
+    insertstream << "coefficient_name" ;
+    insertstream << ", ";
+    insertstream << "variable_name" ;
+    insertstream  << ") " << " VALUES (";
+
+    insertstream << ":sub_model_id";
+    insertstream << ", ";
+    insertstream << ":equation_id" ;
+    insertstream << ", ";
+    insertstream << ":coefficient_name" ;
+    insertstream << ", ";
+    insertstream << ":variable_name" ;
+    insertstream  << ")";
+    Logger(Debug) << insertstream.str();
+
+    query.prepare( QString::fromStdString(insertstream.str()));
+    query.bindValue(":sub_model_id", -2);
+    query.bindValue(":equation_id",-2);
+    query.bindValue(":coefficient_name", "constant");
+    query.bindValue(":variable_name", "constant");
     sr = query.exec();
     if (!sr) {
         Logger(Debug) << query.lastError().text().toStdString();

@@ -29,9 +29,9 @@
 DM_DECLARE_NODE_NAME(CreateJobs, UrbanSim)
 CreateJobs::CreateJobs()
 {
-    grids = DM::View("Grid", DM::FACE, DM::READ);
+    grids = DM::View("GRID", DM::FACE, DM::READ);
     grids.getAttribute("grid_id");
-    grids.getAttribute("population");
+    grids.getAttribute("Persons");
 
     jobs = DM::View("Jobs", DM::COMPONENT, DM::WRITE);
     jobs.addAttribute("job_id");
@@ -39,7 +39,6 @@ CreateJobs::CreateJobs()
     jobs.addAttribute("sector_id");
     jobs.addAttribute("building_type");
     jobs.addAttribute("grid_id");
-    jobs.addAttribute("grid_UUID");
 
     std::vector<DM::View> city_data;
     city_data.push_back(grids);
@@ -56,7 +55,7 @@ void CreateJobs::run() {
         Component * grid = this->city->getComponent(id);
 
 
-        long population = (long) grid->getAttribute("population")->getDouble();
+        long population = (long) grid->getAttribute("Persons")->getDouble();
         long grid_id = (int) grid->getAttribute("grid_id")->getDouble();
 
         do {
@@ -68,9 +67,6 @@ void CreateJobs::run() {
             job->addAttribute("home_based", 0 );
             job->addAttribute("sector_id", 1);
             job->addAttribute("building_type", 1);
-            Attribute uuid("grid_UUID");
-            uuid.setString(id);
-            job->addAttribute(uuid);
             population = population-size;
             JobCounter++;
         } while (population > 0);

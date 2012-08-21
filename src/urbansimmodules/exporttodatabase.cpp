@@ -32,7 +32,7 @@
 DM_DECLARE_NODE_NAME(ExportToDataBase, UrbanSim)
 ExportToDataBase::ExportToDataBase()
 {
-    this->DBName = "urbansim_export_test";
+    this->DBName = "urbansim";
     this->TableName = "Households";
     this->Identifier = "Household_";
     this->DeleteExistingDB = false;
@@ -120,7 +120,7 @@ void ExportToDataBase::run() {
 
     stringstream insertstream;
 
-    query.exec("BEGIN TRANSACTION");
+    //query.exec("BEGIN TRANSACTION");
 
     insertstream << "INSERT INTO " << this->TableName << "(";
     counter = 0;
@@ -130,37 +130,50 @@ void ExportToDataBase::run() {
         insertstream << it->second;
         counter++;
     }
-    insertstream  << ")" << " VALUES (";
+    insertstream  << ")" << " VALUES ";
     counter = 0;
-    for (std::map<std::string, std::string>::const_iterator it = this->Export.begin(); it !=  this->Export.end(); ++it) {
-        if (counter > 0)
-            insertstream << ",";
-        insertstream << " :" << it->second;
-        counter++;
+
+    QString elements = "";
+
+
+    elements += "(";
+    for (int i = 0; i < Export.size(); i++) {
+        if (i > 0)
+            elements += ",";
+        elements += "?";
     }
-    insertstream  << ")";
-    Logger(Debug) << insertstream.str();
+    elements += ")";
+
+    for (int i = 0; i < names.size(); i++) {
+        if (i > 0)
+            insertstream << ",";
+        insertstream << elements.toStdString();
+    }
+    insertstream << ";";
     query.prepare(QString::fromStdString(insertstream.str()));
     foreach(std::string name, names) {
-
+        Component * attr;
+        attr = Input->getComponent(name);
         for (std::map<std::string, std::string>::const_iterator it = this->Export.begin(); it !=  this->Export.end(); ++it) {
             stringstream insert;
             insert << ":"<< it->second;
             std::string n = it->first;
             //Atttribute to String
             std::stringstream ss;
-            if (Input->getComponent(name)->getAttribute(n)->hasDouble())
-                ss << Input->getComponent(name)->getAttribute(n)->getDouble();
-            if (Input->getComponent(name)->getAttribute(n)->hasString())
-                ss << Input->getComponent(name)->getAttribute(n)->getString();
-            query.bindValue(QString::fromStdString(insert.str()) , QString::fromStdString(ss.str()) );
+            if (attr->getAttribute(n)->hasDouble())
+                ss << (int) attr->getAttribute(n)->getDouble();
+            if (attr->getAttribute(n)->hasString())
+                ss <<attr->getAttribute(n)->getString();
+            query.addBindValue(QString::fromStdString(ss.str()) );
         }
 
-        query.exec();
 
     }
-    if ( !query.exec("COMMIT") );
-    Logger(Error) << query.lastError().text().toStdString();
+    //query.exec();
+    if ( !query.exec() )
+        Logger(Error) << query.lastError().text().toStdString();
+    /*if ( !query.exec("END TRANSACTION") )
+        Logger(Error) << query.lastError().text().toStdString();*/
 
     db.close();
 }

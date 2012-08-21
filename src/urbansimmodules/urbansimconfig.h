@@ -82,6 +82,10 @@ public:
     void create_real_estate_price_model_specification();
     void create_residential_development_location_choice_model_specification();
     void create_residential_development_location_choice_model_coefficients();
+    void create_land_price_model_specification();
+    void create_land_price_model_coefficients();
+    void create_residential_land_share_model_specification();
+    void create_residential_land_share_model_coefficients();
 
     void create_race_names();
 };

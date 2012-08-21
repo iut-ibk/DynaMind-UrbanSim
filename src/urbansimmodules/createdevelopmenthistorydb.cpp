@@ -27,22 +27,24 @@
 #include "createdevelopmenthistorydb.h"
 #include <QtSql>
 #include <sstream>
+#include <dm.h>
 DM_DECLARE_NODE_NAME(CreateDevelopmentHistoryDB, UrbanSim)
 
 
 CreateDevelopmentHistoryDB::CreateDevelopmentHistoryDB()
 {
 
+    std::vector<DM::View> data;
+    data.push_back(  DM::View ("Building", DM::COMPONENT, DM::MODIFY) );
+    this->addData("City", data);
 }
 
 void CreateDevelopmentHistoryDB::run() {
     QSqlDatabase db;
-    //   db = QSqlDatabase::addDatabase("QSQLITE");
     db = QSqlDatabase::addDatabase("QMYSQL", QUuid::createUuid().toString());
     db.setHostName("127.0.0.1");
     db.setUserName("urbansim");
     db.setPassword("urbansim");
-    // db.setDatabaseName("/tmp/urbansim.txt");
 
     bool ok = db.open();
     if( ok == false) {
@@ -51,27 +53,12 @@ void CreateDevelopmentHistoryDB::run() {
     }
 
     // Setup the db and start using it somewhere after successfully connecting to the server..
-    QString dbname = QString::fromStdString("urbansim_export_test");
+    QString dbname = QString::fromStdString("urbansim");
     QString tablename = QString::fromStdString("development_event_history");
 
     QSqlQuery query(db);
     bool sr;
     sr = query.exec("USE "+dbname);
-
-    /*  commercial_improvement_value 	int(11) 			Yes 	NULL 		Browse distinct values 	Change 	Drop 	Primary 	Unique 	Index 	Fulltext
-    commercial_sqft 	int(11) 			Yes 	0 		Browse distinct values 	Change 	Drop 	Primary 	Unique 	Index 	Fulltext
-    governmental_improvement_value 	int(11) 			Yes 	NULL 		Browse distinct values 	Change 	Drop 	Primary 	Unique 	Index 	Fulltext
-    governmental_sqft 	int(11) 			Yes 	NULL 		Browse distinct values 	Change 	Drop 	Primary 	Unique 	Index 	Fulltext
-    grid_id 	int(11) 			Yes 	NULL 		Browse distinct values 	Change 	Drop 	Primary 	Unique 	Index 	Fulltext
-    industrial_improvement_value 	int(11) 			Yes 	NULL 		Browse distinct values 	Change 	Drop 	Primary 	Unique 	Index 	Fulltext
-    industrial_sqft 	int(11) 			Yes 	NULL 		Browse distinct values 	Change 	Drop 	Primary 	Unique 	Index 	Fulltext
-    industrial_sqft_per_job 	int(11) 			No 	1000 		Browse distinct values 	Change 	Drop 	Primary 	Unique 	Index 	Fulltext
-    residential_improvement_value 	int(11) 			Yes 	NULL 		Browse distinct values 	Change 	Drop 	Primary 	Unique 	Index 	Fulltext
-    residential_improvement_value_change_type 	text 	latin1_swedish_ci 		Yes 	NULL 		Browse distinct values 	Change 	Drop 	Primary 	Unique 	Index 	Fulltext
-    residential_units 	int(11) 			No 	0 		Browse distinct values 	Change 	Drop 	Primary 	Unique 	Index 	Fulltext
-    residential_units_change_type 	text 	latin1_swedish_ci 		Yes 	NULL 		Browse distinct values 	Change 	Drop 	Primary 	Unique 	Index 	Fulltext
-    scheduled_year 	int(11) 			Yes 	NULL 		Browse distinct values 	Change 	Drop 	Primary 	Unique 	Index 	Fulltext
-    starting_development_type_id 	int(11) 	*/
 
     stringstream ss;
 
@@ -145,74 +132,51 @@ void CreateDevelopmentHistoryDB::run() {
     insertstream << ", ";
     insertstream << "starting_development_type_id" ;
 
-    insertstream  << ") " << " VALUES (";
+    insertstream  << ") " << " VALUES ";
 
-    insertstream << ":commercial_improvement_value";
-    insertstream << ", ";
-    insertstream << ":commercial_sqft";
-    insertstream << ", ";
-    insertstream << ":governmental_improvement_value";
-    insertstream << ", ";
-    insertstream << ":governmental_sqft";
-    insertstream << ", ";
-    insertstream << ":grid_id" ;
-    insertstream << ", ";
-    insertstream << ":industrial_improvement_value" ;
-    insertstream << ", ";
-    insertstream << ":industrial_sqft" ;
-    insertstream << ", ";
-    insertstream << ":industrial_sqft_per_job" ;
-    insertstream << ", ";
-    insertstream << ":residential_improvement_value" ;
-    insertstream << ", ";
-    insertstream << ":residential_improvement_value_change_type" ;
-    insertstream << ", ";
-    insertstream << ":residential_units" ;
-    insertstream << ", ";
-    insertstream << ":residential_units_change_type" ;
-    insertstream << ", ";
-    insertstream << ":scheduled_year" ;
-    insertstream << ", ";
-    insertstream << ":starting_development_type_id" ;
+    QString elements = "";
 
-    insertstream  << ")";
-    Logger(Debug) << insertstream.str();
+
+    elements += "(";
+    for (int i = 0; i < 14; i++) {
+        if (i > 0)
+            elements += ",";
+        elements += "?";
+    }
+    elements += ")";
+
+
+    DM::System * sys = this->getData("City");
+    std::vector<std::string> uuids = sys->getUUIDsOfComponentsInView(DM::View ("Building", DM::SUBSYSTEM, DM::MODIFY) );
+
+    for (int i = 0; i < uuids.size(); i++) {
+        if (i > 0)
+            insertstream << ",";
+        insertstream << elements.toStdString();
+    }
+
+    insertstream  << ";";
 
     query.prepare(QString::fromStdString(insertstream.str()));
-    query.bindValue(":commercial_improvement_value", "0");
-    query.bindValue(":commercial_sqft", "0");
-    query.bindValue(":governmental_improvement_value", "0");
-    query.bindValue(":governmental_sqft", "0");
-    query.bindValue(":grid_id", "1");
-    query.bindValue(":industrial_sqft", "0");
-    query.bindValue(":industrial_sqft_per_job", "0");
-    query.bindValue(":industrial_improvement_value", "0");
-    query.bindValue(":residential_improvement_value", "1000");
-    query.bindValue(":residential_improvement_value_change_type", "A");
-    query.bindValue(":residential_units", "1");
-    query.bindValue(":residential_units_change_type", "A");
-    query.bindValue(":scheduled_year", "1980");
-    query.bindValue(":starting_development_type_id", "8");
+    foreach (std::string uuid, uuids) {
+        DM::Component * cmp = sys->getComponent(uuid);
 
-    sr = query.exec();
+        query.addBindValue(0);
+        query.addBindValue(0);
+        query.addBindValue(0);
+        query.addBindValue(0);
+        query.addBindValue(cmp->getAttribute("grid_id")->getDouble());
+        query.addBindValue(0);
+        query.addBindValue(0);
+        query.addBindValue(0);
+        query.addBindValue(cmp->getAttribute("residential_units")->getDouble()*1000);
+        query.addBindValue("A");
+        query.addBindValue(cmp->getAttribute("residential_units")->getDouble());
+        query.addBindValue("A");
+        query.addBindValue(cmp->getAttribute("year_built")->getDouble());
+        query.addBindValue( "1");
+    }
 
-
-    /*query.prepare(QString::fromStdString(insertstream.str()));
-    query.bindValue(":commercial_improvement_value", "0");
-    query.bindValue(":commercial_sqft", "0");
-    query.bindValue(":governmental_improvement_value", "0");
-    query.bindValue(":governmental_sqft", "0");
-    query.bindValue(":grid_id", "2");
-    query.bindValue(":industrial_sqft", "0");
-    query.bindValue(":industrial_sqft_per_job", "0");
-    query.bindValue(":industrial_improvement_value", "0");
-    query.bindValue(":residential_improvement_value", "2000");
-    query.bindValue(":residential_improvement_value_change_type", "A");
-    query.bindValue(":residential_units", "2");
-    query.bindValue(":residential_units_change_type", "A");
-    query.bindValue(":scheduled_year", "1980");
-    query.bindValue(":starting_development_type_id", "8");
-
-    sr = query.exec();*/
-
+    if ( !query.exec() )
+        Logger(Error) << query.lastError().text().toStdString();
 }
