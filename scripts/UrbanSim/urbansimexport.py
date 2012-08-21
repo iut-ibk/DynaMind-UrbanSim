@@ -41,7 +41,10 @@ class UrbanSimExport(Module):
             self.Parcel = False
             self.createParameter("YearsToRun", DOUBLE, "UrbanSim simulation years")
 	    self.YearsToRun = 20   
-            
+            data = []
+	    v = View("dummy", SUBSYSTEM, MODIFY)
+            data.append(v)
+	    self.addData("City", data)
         def run(self):
 	    if self.Parcel == False:
 		    u = start_run_vibe.UrbanSim_VIBe(int(self.YearsToRun))
