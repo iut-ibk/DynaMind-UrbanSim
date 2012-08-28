@@ -109,6 +109,18 @@ void CreateDevelopmentHistoryDB::run() {
     ss << "scheduled_year" << " "  << "INT";
     ss << ", ";
     ss << "starting_development_type_id" << " "  << "INT";
+    ss << ", ";
+    ss << "governmental_sqft_change_type"<< " "  << "TEXT";
+    ss << ", ";
+    ss << "governmental_improvement_value_change_type" << " "  << "TEXT";
+    ss << ", ";
+    ss << "commercial_sqft_change_type" << " "  << "TEXT";
+    ss << ", ";
+    ss << "commercial_improvement_value_change_type" << " "  << "TEXT";
+    ss << ", ";
+    ss << "industrial_sqft_change_type" << " "  << "TEXT";
+    ss << ", ";
+    ss << "industrial_improvement_value_change_type" << " "  << "TEXT";
     ss << ")";
 
 
@@ -148,6 +160,19 @@ void CreateDevelopmentHistoryDB::run() {
     insertstream << "scheduled_year" ;
     insertstream << ", ";
     insertstream << "starting_development_type_id" ;
+    insertstream << ", ";
+    insertstream << "governmental_sqft_change_type" ;
+    insertstream << ", ";
+    insertstream << "governmental_improvement_value_change_type" ;
+    insertstream << ", ";
+    insertstream << "commercial_sqft_change_type" ;
+    insertstream << ", ";
+    insertstream << "commercial_improvement_value_change_type" ;
+    insertstream << ", ";
+    insertstream << "industrial_sqft_change_type" ;
+    insertstream << ", ";
+    insertstream << "industrial_improvement_value_change_type" ;
+
 
     insertstream  << ") " << " VALUES ";
 
@@ -155,7 +180,7 @@ void CreateDevelopmentHistoryDB::run() {
 
 
     elements += "(";
-    for (int i = 0; i < 14; i++) {
+    for (int i = 0; i < 20; i++) {
         if (i > 0)
             elements += ",";
         elements += "?";
@@ -191,12 +216,18 @@ void CreateDevelopmentHistoryDB::run() {
             query.addBindValue(0);
             query.addBindValue(0);
             query.addBindValue(0);
-            query.addBindValue(it->second*1000);
+            query.addBindValue(0);
             query.addBindValue("A");
             query.addBindValue(it->second);
             query.addBindValue("A");
             query.addBindValue(i+1950);
             query.addBindValue( "1");
+            query.addBindValue("A");
+            query.addBindValue("A");
+            query.addBindValue("A");
+            query.addBindValue("A");
+            query.addBindValue("A");
+            query.addBindValue("A");
         }
     }
 

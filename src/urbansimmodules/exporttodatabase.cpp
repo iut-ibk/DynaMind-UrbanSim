@@ -141,6 +141,7 @@ void ExportToDataBase::run() {
         if (i > 0)
             elements += ",";
         elements += "?";
+
     }
     elements += ")";
 
@@ -148,8 +149,11 @@ void ExportToDataBase::run() {
         if (i > 0)
             insertstream << ",";
         insertstream << elements.toStdString();
+        if (i == 5000)
+            break;
     }
     insertstream << ";";
+    int c = 0;
     query.prepare(QString::fromStdString(insertstream.str()));
     foreach(std::string name, names) {
         Component * attr;
@@ -166,6 +170,16 @@ void ExportToDataBase::run() {
                 ss <<attr->getAttribute(n)->getString();
             query.addBindValue(QString::fromStdString(ss.str()) );
         }
+
+        if (c == 5000) {
+            c = -1;
+            query.exec();
+            query.prepare(QString::fromStdString(insertstream.str()));
+        }
+
+        c++;
+
+
 
 
     }
