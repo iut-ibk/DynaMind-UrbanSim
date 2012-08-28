@@ -411,7 +411,7 @@ void UrbanSimConfig::create_urbansim_constants() {
     query.bindValue(":near_arterial_threshold", 300);
     query.bindValue(":near_highway_threshold", 300);
     query.bindValue(":percent_coverage_threshold", 50);;
-    query.bindValue(":recent_years", 3);
+    query.bindValue(":recent_years", 30);
 
     sr = query.exec();
 
@@ -609,7 +609,7 @@ void UrbanSimConfig::create_development_constraints() {
 
     query.prepare( QString::fromStdString(insertstream.str()));
     query.bindValue(":min_units", 0);
-    query.bindValue(":max_units", 5);
+    query.bindValue(":max_units", 500);
     query.bindValue(":min_commercial_sqft", 0);
     query.bindValue(":max_commercial_sqft", 9999999);
     query.bindValue(":min_industrial_sqft", 0);

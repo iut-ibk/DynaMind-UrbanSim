@@ -1,3 +1,0 @@
-python mainwindow.py
-
-pause

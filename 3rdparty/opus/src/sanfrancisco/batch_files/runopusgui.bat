@@ -1,1 +1,0 @@
-c:\python26\python.exe c:\opus\src\opus_gui\opus.py

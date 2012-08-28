@@ -18,4 +18,5 @@ Makefile
 CMakeLists.txt.user
 build
 *.bat
+3rdparty/opus/src/data/
 bin

@@ -40,6 +40,23 @@ CreateDevelopmentHistoryDB::CreateDevelopmentHistoryDB()
 }
 
 void CreateDevelopmentHistoryDB::run() {
+
+    std::vector<std::map<int, int> * > events;
+    for (int i = 0; i < 30; i++) {
+        events.push_back(new std::map<int, int>());
+    }
+    DM::System * sys = this->getData("City");
+    std::vector<std::string> uuids = sys->getUUIDsOfComponentsInView(DM::View ("Building", DM::SUBSYSTEM, DM::MODIFY) );
+    foreach (std::string uuid, uuids) {
+        DM::Component * cmp = sys->getComponent(uuid);
+        int y = (int)cmp->getAttribute("year_built")->getDouble();
+        std::map<int, int> * m = events[y-1950];
+        int id = cmp->getAttribute("grid_id")->getDouble();
+        int r =  (*m)[id];
+        (*m)[id] = r+(int)cmp->getAttribute("residential_units")->getDouble();
+
+    }
+
     QSqlDatabase db;
     db = QSqlDatabase::addDatabase("QMYSQL", QUuid::createUuid().toString());
     db.setHostName("127.0.0.1");
@@ -146,37 +163,48 @@ void CreateDevelopmentHistoryDB::run() {
     elements += ")";
 
 
-    DM::System * sys = this->getData("City");
-    std::vector<std::string> uuids = sys->getUUIDsOfComponentsInView(DM::View ("Building", DM::SUBSYSTEM, DM::MODIFY) );
 
-    for (int i = 0; i < uuids.size(); i++) {
-        if (i > 0)
-            insertstream << ",";
-        insertstream << elements.toStdString();
+    int c = 0;
+    for (int i = 0; i < 30; i++) {
+        std::map<int, int> * m = events[i];
+        for (std::map<int, int>::const_iterator it = m->begin(); it != m->end(); ++it) {
+            if (c > 0)
+                insertstream << ",";
+            insertstream << elements.toStdString();
+            c++;
+        }
     }
 
     insertstream  << ";";
 
-    query.prepare(QString::fromStdString(insertstream.str()));
-    foreach (std::string uuid, uuids) {
-        DM::Component * cmp = sys->getComponent(uuid);
 
-        query.addBindValue(0);
-        query.addBindValue(0);
-        query.addBindValue(0);
-        query.addBindValue(0);
-        query.addBindValue(cmp->getAttribute("grid_id")->getDouble());
-        query.addBindValue(0);
-        query.addBindValue(0);
-        query.addBindValue(0);
-        query.addBindValue(cmp->getAttribute("residential_units")->getDouble()*1000);
-        query.addBindValue("A");
-        query.addBindValue(cmp->getAttribute("residential_units")->getDouble());
-        query.addBindValue("A");
-        query.addBindValue(cmp->getAttribute("year_built")->getDouble());
-        query.addBindValue( "1");
+
+    query.prepare(QString::fromStdString(insertstream.str()));
+    for (int i = 0; i < 30; i++) {
+        std::map<int, int> * m = events[i];
+        for (std::map<int, int>::const_iterator it = m->begin(); it != m->end(); ++it) {
+            query.addBindValue(0);
+            query.addBindValue(0);
+            query.addBindValue(0);
+            query.addBindValue(0);
+            query.addBindValue(it->first);
+            query.addBindValue(0);
+            query.addBindValue(0);
+            query.addBindValue(0);
+            query.addBindValue(it->second*1000);
+            query.addBindValue("A");
+            query.addBindValue(it->second);
+            query.addBindValue("A");
+            query.addBindValue(i+1950);
+            query.addBindValue( "1");
+        }
     }
 
     if ( !query.exec() )
         Logger(Error) << query.lastError().text().toStdString();
+
+    for (int i = 0; i < 30; i++) {
+        delete events[i];
+    }
+    events.clear();
 }
