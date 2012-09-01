@@ -48,7 +48,10 @@ class ImportUrbanSim(Module):
             self.stop = 0
             self.YearsToRun = 20
             self.isParcel = False
-         
+            data = []
+	    v = View("dummy", SUBSYSTEM, MODIFY)
+            data.append(v)
+	    self.addData("City", data)         
 		
   
 	def run (self):
