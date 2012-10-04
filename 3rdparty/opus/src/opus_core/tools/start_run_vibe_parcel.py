@@ -86,7 +86,7 @@ class UrbanSim_VIBe:
         else:
             parser.print_help()
             sys.exit(1)
-        config['years']    = range(1981, 1981+self.YearsToRun)
+        config['years']    = range(2012, 2012+self.YearsToRun)
         if options.existing_cache_to_copy is not None:
             config['creating_baseyear_cache_configuration'].cache_from_database = False
             config['creating_baseyear_cache_configuration'].baseyear_cache = BaseyearCacheConfiguration(

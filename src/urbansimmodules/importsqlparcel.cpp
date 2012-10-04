@@ -40,23 +40,24 @@ ImportSQLParcel::ImportSQLParcel()
 
     this->addParameter("Year", DM::INT,  & this->Year);
 
-    parcels = DM::View("Parcel", DM::FACE, DM::READ);
-    parcels.getAttribute("urbansim_id");
+    parcels = DM::View("GRID", DM::FACE, DM::READ);
+    parcels.getAttribute("grid_id");
+    parcels.addAttribute("PersonsV");
 
-    households = DM::View("Household", DM::NODE, DM::MODIFY);
-    households.modifyAttribute("urbansim_id");
+    households = DM::View("HOUSEHOLD", DM::NODE, DM::MODIFY);
+    households.modifyAttribute("household_id");
 
-    buildings = DM::View("Building", DM::SUBSYSTEM, DM::MODIFY);
+    /*buildings = DM::View("Building", DM::SUBSYSTEM, DM::MODIFY);
     buildings.modifyAttribute("urbansim_id");
 
     persons = DM::View("Persons", DM::SUBSYSTEM, DM::MODIFY);
-    persons.modifyAttribute("urbansim_id");
+    persons.modifyAttribute("urbansim_id");*/
 
     std::vector<DM::View> city_data;
     city_data.push_back(parcels);
     city_data.push_back(households);
-    city_data.push_back(buildings);
-    city_data.push_back(persons);
+    //city_data.push_back(buildings);
+    //city_data.push_back(persons);
 
     this->addData("City", city_data);
 
@@ -77,16 +78,16 @@ void ImportSQLParcel::run() {
 
 
     std::map<std::string, DM::View> tablesToImport;
-    tablesToImport["parcels"] = parcels;
-    tablesToImport["buildings"] = buildings;
+    //tablesToImport["grids"] = parcels;
+    //tablesToImport["buildings"] = buildings;
     tablesToImport["households"] = households;
-    tablesToImport["persons"] = persons;
+    //tablesToImport["persons"] = persons;
 
     std::map<std::string, std::string> UrbanSim_IDs;
-    UrbanSim_IDs["parcels"] = "parcel_";
-    UrbanSim_IDs["buildings"] = "building_";
+    //UrbanSim_IDs["grids"] = "grid_";
+    //UrbanSim_IDs["buildings"] = "building_";
     UrbanSim_IDs["households"] = "household_";
-    UrbanSim_IDs["persons"] = "person_";
+    //UrbanSim_IDs["persons"] = "person_";
 
     // Setup the db and start using it somewhere after successfully connecting to the server.
     QString dbname = "ress_"+QString::number(this->Year);
@@ -99,16 +100,18 @@ void ImportSQLParcel::run() {
         return;
     }
 
+    //Import Househlds
+
+
+    std::map<int, std::string> TranslateGridIDToUUID;
+
+
+
     for (std::map<std::string, DM::View>::const_iterator it = tablesToImport.begin();
          it != tablesToImport.end();
          ++it) {
         int numberOfImportedEntries = 0;
         int numberOfRemovedEntries = 0;
-
-        //
-
-
-
 
 
         std::stringstream squery;
@@ -130,6 +133,7 @@ void ImportSQLParcel::run() {
             cmp->addAttribute("exists", false);
             UrbanSim2DynaMind[ (int)cmp->getAttribute(sID.str())->getDouble()] =name;
         }
+
 
 
         int index_grid_id = query.record().indexOf(QString::fromStdString(sID.str()));
@@ -181,7 +185,7 @@ void ImportSQLParcel::run() {
                 if (v.getType() == DM::COMPONENT)
                     this->city->removeComponent(name);
                 if (v.getType() == DM::NODE)
-                     this->city->removeNode(name);
+                    this->city->removeNode(name);
                 if (v.getType() == DM::EDGE)
                     this->city->removeEdge(name);
                 if (v.getType() == DM::FACE)

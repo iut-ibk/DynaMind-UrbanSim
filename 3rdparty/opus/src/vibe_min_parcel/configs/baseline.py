@@ -26,7 +26,7 @@ class Baseline(UrbansimParcelConfiguration):
             cache_directory_root = os.path.join(os.environ['OPUS_HOME'], 'data/vibe_parcel/runs'),
                 cache_from_database = True,
             baseyear_cache = BaseyearCacheConfiguration(
-                    existing_cache_to_copy =  os.path.join(os.environ['OPUS_HOME'], 'data/vibe_gridcell/base_year_data'),
+                    existing_cache_to_copy =  os.path.join(os.environ['OPUS_HOME'], 'data/vibe_parcel/base_year_data'),
                     ),
                 cache_scenario_database = 'urbansim.model_coordinators.cache_scenario_database',
                 tables_to_cache = [
@@ -76,7 +76,7 @@ class Baseline(UrbansimParcelConfiguration):
                 unroll_gridcells = False
                 ),
             'scenario_database_configuration': ScenarioDatabaseConfiguration(
-                database_name = 'urbansim_export_test',
+                database_name = 'urbansim',
                 ),
             'dataset_pool_configuration': DatasetPoolConfiguration(
                 #package_order=['psrc_parcel', 'urbansim_parcel', 'urbansim', 'opus_core'],
@@ -84,8 +84,8 @@ class Baseline(UrbansimParcelConfiguration):
                 package_order=['psrc_parcel','urbansim_parcel', 'urbansim', 'opus_core'],
                 ),
 
-            'base_year':1980,
-            'years':(1981, 1985),
+            'base_year':2011,
+            'years':(2012, 2014),
             'models':[ # models are executed in the same order as in this list
                 #"process_pipeline_events", # uncomented by model
                 "real_estate_price_model",
@@ -100,9 +100,9 @@ class Baseline(UrbansimParcelConfiguration):
                 #{"employment_location_choice_model":{'group_members': '_all_'}},
                 #'distribute_unplaced_jobs_model'
                 ],
-            'models_in_year': {1980: [ # This is not run anymore, since all jobs are located and only a few households are not.
-                 "household_relocation_model_for_1980",
-                "household_location_choice_model_for_1980",
+            'models_in_year': {2011: [ # This is not run anymore, since all jobs are located and only a few households are not.
+                 "household_relocation_model_for_2011",
+                "household_location_choice_model_for_2011",
                 #"employment_relocation_model_for_1980",
                 #{"employment_location_choice_model":{'group_members': '_all_'}}
                                        ]

@@ -74,7 +74,7 @@ class ImportUrbanSim(Module):
 					   password = 'urbansim',
                                            protocol = 'mysql')
 		db_server = DatabaseServer(config)
-		for i in range(1981, 1980+int(self.YearsToRun)):
+		for i in range(2011, 2011+int(self.YearsToRun)):
 			newdir = latest + '/' + str(i)
 			flt_directory_in = os.path.join(os.environ['OPUS_HOME'], directoryname ,newdir)
 			input_storage = flt_storage(storage_location = flt_directory_in)	

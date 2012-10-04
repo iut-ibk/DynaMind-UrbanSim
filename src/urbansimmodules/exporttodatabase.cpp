@@ -46,8 +46,6 @@ ExportToDataBase::ExportToDataBase()
     this->addParameter("Export", DM::STRING_MAP, &this->Export);
     this->addParameter("Datatypes", DM::STRING_MAP, &this->Dataypes);
 
-    //this->addParameter("Input", VIBe2::VECTORDATA_IN, &this->Input);
-
     std::vector<DM::View> data;
     data.push_back(  DM::View ("dummy", DM::SUBSYSTEM, DM::MODIFY) );
 
@@ -149,8 +147,8 @@ void ExportToDataBase::run() {
         if (i > 0)
             insertstream << ",";
         insertstream << elements.toStdString();
-        if (i == 5000)
-            break;
+/*        if (i == 5000)
+            break;*/
     }
     insertstream << ";";
     int c = 0;
@@ -164,18 +162,21 @@ void ExportToDataBase::run() {
             std::string n = it->first;
             //Atttribute to String
             std::stringstream ss;
-            if (attr->getAttribute(n)->hasDouble())
-                ss << (int) attr->getAttribute(n)->getDouble();
-            if (attr->getAttribute(n)->hasString())
+
+            if (attr->getAttribute(n)->hasString()) {
                 ss <<attr->getAttribute(n)->getString();
+            }
+            else {
+                ss << (int) attr->getAttribute(n)->getDouble();
+            }
             query.addBindValue(QString::fromStdString(ss.str()) );
         }
 
-        if (c == 5000) {
+        /*if (c == 5000) {
             c = -1;
             query.exec();
             query.prepare(QString::fromStdString(insertstream.str()));
-        }
+        }*/
 
         c++;
 

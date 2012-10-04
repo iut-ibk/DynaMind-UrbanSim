@@ -294,7 +294,7 @@ void UrbanSimConfig::create_base_year() {
     Logger(Debug) << insertstream.str();
 
     query.prepare( QString::fromStdString(insertstream.str()));
-    query.bindValue(":year" ,1980);
+    query.bindValue(":year" ,2011);
 
 
     sr = query.exec();
@@ -778,7 +778,7 @@ void UrbanSimConfig::create_development_type_group_definitions() {
     group_id.push_back( 	 		5  );  development_type_id.push_back(	8 );
     group_id.push_back( 	 		8  );  development_type_id.push_back(	8 );*/
 
-    for (int i = 0;i < group_id.size(); i++ ) {
+    for (unsigned int i = 0;i < group_id.size(); i++ ) {
         query.prepare( QString::fromStdString(insertstream.str()));
         query.bindValue(":group_id" ,  group_id[i]);
         query.bindValue(":development_type_id", development_type_id[i]);
