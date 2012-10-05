@@ -39,13 +39,13 @@ class DM_HELPER_DLL_EXPORT ImportSQLParcel : public Module
     DM_DECLARE_NODE(ImportSQLParcel)
 
     private:
-        DM::System * city;
-        int Year;
+        DM::System * sys;
 
         DM::View parcels;
         DM::View households;
         DM::View buildings;
         DM::View persons;
+        DM::View city;
 public:
     ImportSQLParcel();
     void run();

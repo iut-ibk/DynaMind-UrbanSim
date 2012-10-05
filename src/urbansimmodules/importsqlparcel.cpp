@@ -31,33 +31,28 @@
 DM_DECLARE_NODE_NAME(ImportSQLParcel, UrbanSim)
 ImportSQLParcel::ImportSQLParcel()
 {
-    this->Year = 1980;
-    /*this->addParameter("UrbanEnvironment_In", VIBe2::VECTORDATA_IN, & this->UrbanEnvironment_In);
-    this->addParameter("UrbanEnvironment_Out", VIBe2::VECTORDATA_OUT, & this->UrbanEnvironment_Out);*/
+    city = DM::View("CITY", DM::FACE, DM::READ);
+    city.getAttribute("Year");
 
 
-
-
-    this->addParameter("Year", DM::INT,  & this->Year);
-
-    parcels = DM::View("GRID", DM::FACE, DM::READ);
-    parcels.getAttribute("grid_id");
-    parcels.addAttribute("PersonsV");
+    parcels = DM::View("PARCEL", DM::FACE, DM::READ);
+    parcels.getAttribute("id");
 
     households = DM::View("HOUSEHOLD", DM::NODE, DM::MODIFY);
-    households.modifyAttribute("household_id");
+    households.modifyAttribute("id");
 
-    /*buildings = DM::View("Building", DM::SUBSYSTEM, DM::MODIFY);
-    buildings.modifyAttribute("urbansim_id");
+    buildings = DM::View("BUILDING", DM::FACE, DM::MODIFY);
+    buildings.modifyAttribute("id");
 
-    persons = DM::View("Persons", DM::SUBSYSTEM, DM::MODIFY);
-    persons.modifyAttribute("urbansim_id");*/
+    persons = DM::View("PERSON", DM::SUBSYSTEM, DM::MODIFY);
+    persons.modifyAttribute("id");
 
     std::vector<DM::View> city_data;
     city_data.push_back(parcels);
-    city_data.push_back(households);
-    //city_data.push_back(buildings);
+    //city_data.push_back(households);
+    city_data.push_back(buildings);
     //city_data.push_back(persons);
+    city_data.push_back(city);
 
     this->addData("City", city_data);
 
@@ -66,7 +61,18 @@ ImportSQLParcel::ImportSQLParcel()
 }
 
 void ImportSQLParcel::run() {
-    this->city = this->getData("City");
+    this->sys = this->getData("City");
+
+
+    std::vector<std::string> city_uuids = this->sys->getUUIDsOfComponentsInView(city);
+    if (city_uuids.size() != 1) {
+        Logger(Error) << "More than one city object";
+        return;
+    }
+
+
+    DM::Component * cmp_city = sys->getComponent(city_uuids[0]);
+
     QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL", QUuid::createUuid().toString());
     db.setUserName("urbansim");
     db.setPassword("urbansim");
@@ -78,19 +84,21 @@ void ImportSQLParcel::run() {
 
 
     std::map<std::string, DM::View> tablesToImport;
-    //tablesToImport["grids"] = parcels;
-    //tablesToImport["buildings"] = buildings;
+    tablesToImport["parcels"] = parcels;
+    tablesToImport["buildings"] = buildings;
     tablesToImport["households"] = households;
-    //tablesToImport["persons"] = persons;
+    tablesToImport["persons"] = persons;
 
     std::map<std::string, std::string> UrbanSim_IDs;
-    //UrbanSim_IDs["grids"] = "grid_";
-    //UrbanSim_IDs["buildings"] = "building_";
+    UrbanSim_IDs["parcels"] = "grid_";
+    UrbanSim_IDs["buildings"] = "building_";
     UrbanSim_IDs["households"] = "household_";
-    //UrbanSim_IDs["persons"] = "person_";
+    UrbanSim_IDs["persons"] = "person_";
+
+    Logger(Debug) << "Year: "<< (int)cmp_city->getAttribute("Year")->getDouble();
 
     // Setup the db and start using it somewhere after successfully connecting to the server.
-    QString dbname = "ress_"+QString::number(this->Year);
+    QString dbname = "ress_"+QString::number((int)cmp_city->getAttribute("Year")->getDouble());
     bool sr;
 
     QSqlQuery query(db);
@@ -100,103 +108,64 @@ void ImportSQLParcel::run() {
         return;
     }
 
-    //Import Househlds
 
 
-    std::map<int, std::string> TranslateGridIDToUUID;
+    std::map<int, std::string> parcel_ids;
+    std::map<int, std::string> building_ids;
 
+    std::vector<std::string> parcel_uuids = this->sys->getUUIDsOfComponentsInView(parcels);
+    std::vector<std::string> building_uuids = this->sys->getUUIDsOfComponentsInView(buildings);
 
-
-    for (std::map<std::string, DM::View>::const_iterator it = tablesToImport.begin();
-         it != tablesToImport.end();
-         ++it) {
-        int numberOfImportedEntries = 0;
-        int numberOfRemovedEntries = 0;
-
-
-        std::stringstream squery;
-        squery<< "SELECT * FROM " << it->first;
-        sr = query.exec(QString::fromStdString(squery.str()));
-        if (!sr) {
-            Logger(Error) << query.lastError().text().toStdString();
-            return;
-        }
-
-        int numberOfFields = query.record().count();
-        std::stringstream sID;
-        sID << UrbanSim_IDs[it->first] << "id";
-
-        std::map<int, std::string> UrbanSim2DynaMind;
-        std::vector<std::string> names = this->city->getUUIDsOfComponentsInView(it->second);
-        foreach (std::string name, names) {
-            Component * cmp = this->city->getComponent(name);
-            cmp->addAttribute("exists", false);
-            UrbanSim2DynaMind[ (int)cmp->getAttribute(sID.str())->getDouble()] =name;
-        }
-
-
-
-        int index_grid_id = query.record().indexOf(QString::fromStdString(sID.str()));
-        while (query.next()) {
-            numberOfImportedEntries++;
-            int id = query.value(index_grid_id).toInt();
-
-            std::string dmID = UrbanSim2DynaMind[id];
-            Component * cmp;
-            if (dmID.empty()) {
-                DM::View v = it->second;
-                if (v.getType() == DM::COMPONENT)
-                    cmp = this->city->addComponent(new Component(), v);
-                if (v.getType() == DM::NODE)
-                    cmp = this->city->addNode(Node(), v);
-                if (v.getType() == DM::EDGE)
-                    cmp = this->city->addEdge(this->city->addNode(0,0,0), this->city->addNode(0,0,0), v);
-                if (v.getType() == DM::FACE) {
-                    DM::Node * n1 =this->city->addNode(0,0,0);
-                    std::vector<Node*> ve;
-                    ve.push_back(n1);
-                    cmp = this->city->addFace(ve, v);
-
-                }
-                if (v.getType() == DM::SUBSYSTEM)
-                    cmp = this->city->addSubSystem(new System(), v);
-
-                cmp->addAttribute(sID.str(), id);
-            } else {
-                this->city->getComponent(dmID);
-            }
-            for (int i = 0; i < numberOfFields; i++) {
-                if (i == index_grid_id )
-                    continue;
-                QString name = query.record().fieldName(i);
-                cmp->addAttribute(name.toStdString(), query.value(i).toDouble());
-
-
-            }
-            cmp->addAttribute("exists", true);
-        }
-        names =  this->city->getUUIDsOfComponentsInView(it->second);
-        foreach (std::string name, names) {
-            Component * cmp;
-            cmp = this->city->getComponent(name);
-            if (! (bool) cmp->getAttribute("exists")) {
-
-                DM::View v = it->second;
-                if (v.getType() == DM::COMPONENT)
-                    this->city->removeComponent(name);
-                if (v.getType() == DM::NODE)
-                    this->city->removeNode(name);
-                if (v.getType() == DM::EDGE)
-                    this->city->removeEdge(name);
-                if (v.getType() == DM::FACE)
-                    this->city->removeFace(name);
-                if (v.getType() == DM::SUBSYSTEM)
-                    this->city->removeSubSystem(name);
-            }
-        }
-
-        Logger(Debug) << "Imported " << it->first << " " << numberOfImportedEntries;
-        Logger(Debug) << "Removed " << it->first << " " << numberOfRemovedEntries;
+    foreach (std::string p_uuid, parcel_uuids) {
+        Component * p = sys->getComponent(p_uuid);
+        parcel_ids[(int)   p->getAttribute("id")->getDouble()] = p_uuid;
     }
+
+    foreach (std::string p_uuid, building_uuids) {
+        Component * p = sys->getComponent(p_uuid);
+        building_ids[(int)   p->getAttribute("id")->getDouble()] = p_uuid;
+    }
+
+
+
+
+    std::stringstream squery;
+    squery<< "SELECT * FROM " << "buildings";
+    sr = query.exec(QString::fromStdString(squery.str()));
+    if (!sr) {
+        Logger(Error) << query.lastError().text().toStdString();
+        return;
+    }
+    int parcel_id_No = query.record().indexOf("parcel_id");
+    int building_id_No = query.record().indexOf("building_id");
+    int residentail_units_No = query.record().indexOf("residentail_units");
+    int year_built_No = query.record().indexOf("year_built");
+
+    int counter = 0;
+   int create_counter = 0;
+    while (query.next()) {
+
+        counter++;
+        int parcel_id =query.value(parcel_id_No).toInt();
+        int building_id = query.value(building_id_No).toInt();
+        if (building_ids.find(building_id) == building_ids.end()) {
+            //Create new building
+            DM::Node * n1 =this->sys->addNode(0,0,0);
+            std::vector<Node*> ve;
+            ve.push_back(n1);
+            DM::Component * cmp = this->sys->addFace(ve, buildings);
+            cmp->addAttribute("id", query.value(building_id).toInt());
+            cmp->addAttribute("residentail_units", query.value(residentail_units_No).toInt());
+            cmp->addAttribute("year_built", query.value(year_built_No).toInt());
+            cmp->getAttribute("PARCEL")->setLink(parcels.getName(), parcel_ids[parcel_id]);
+
+            DM::Component * cmp_p = this->sys->getComponent(parcel_ids[parcel_id]);
+            cmp_p->getAttribute("BUILDING")->setLink(buildings.getName(), cmp->getUUID());
+
+            create_counter++;
+        }
+    }
+    Logger(Debug) << "Elements imported " << counter;
+    Logger(Debug) << "Elements created " << create_counter;
 
 }

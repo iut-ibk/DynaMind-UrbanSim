@@ -1066,7 +1066,7 @@ void UrbanSimConfig::create_target_vacancies_parcel() {
     insertstream  << ")";
     Logger(Debug) << insertstream.str();
 
-    for (int i = 1980; i < 1980+ this->YearsToRun; i++) {
+    for (int i = 2012; i < 2012+ this->YearsToRun; i++) {
         query.prepare( QString::fromStdString(insertstream.str()));
         query.bindValue(":target_vacancy_rate", 0.05);
         query.bindValue(":building_type_id",1);
